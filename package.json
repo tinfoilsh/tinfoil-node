@@ -1,11 +1,11 @@
 {
   "name": "tinfoil",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Official Tinfoil secure OpenAI client wrapper",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/wasm-exec.js dist/",
     "test": "jest --config jest.config.cjs",
     "lint": "eslint src/**/*.ts",
     "prepublishOnly": "npm run build"
