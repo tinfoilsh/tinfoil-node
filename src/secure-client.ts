@@ -34,13 +34,16 @@ if (!globalThis.crypto) {
   };
 }
 
-// Additional browser polyfills that might be needed
-globalThis.window = globalThis;
-globalThis.document = { 
-  createElement: () => ({ 
-    setAttribute: () => {} 
-  }) 
-};
+// Modified secure-client.ts
+if (typeof window === 'undefined') {
+  // Node.js environment
+  globalThis.window = globalThis as any;
+  globalThis.document = {
+    createElement: () => ({
+      setAttribute: () => {}
+    })
+  };
+}
 
 // Force process to stay running (prevent Go from exiting Node process)
 // This is a common issue with Go WASM in Node - it calls process.exit()
