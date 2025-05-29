@@ -17,15 +17,15 @@ npm install tinfoil
 import { TinfoilAI } from 'tinfoil';
 
 const client = new TinfoilAI({
-  enclave: 'models.default.tinfoil.sh',  // or use TINFOIL_ENCLAVE env var
-  repo: 'tinfoilsh/default-models-nitro', // or use TINFOIL_REPO env var
+  enclave: 'llama3-3-70b.model.tinfoil.sh',  // or use TINFOIL_ENCLAVE env var
+  repo: 'tinfoilsh/confidential-llama3-3-70b', // or use TINFOIL_REPO env var
   apiKey: 'tinfoil'                 // or use OPENAI_API_KEY env var
 });
 
 // Uses identical method calls as the OpenAI client
 const completion = await client.chat.completions.create({
   messages: [{ role: 'user', content: 'Hello!' }],
-  model: 'llama3.2:1b'
+  model: 'llama3-3-70b'
 });
 ```
 
@@ -44,8 +44,8 @@ npm install
 3. Optionally create a `.env` file with your configuration:
 
 ```bash
-TINFOIL_ENCLAVE=models.default.tinfoil.sh
-TINFOIL_REPO=tinfoilsh/default-models-nitro
+TINFOIL_ENCLAVE=llama3-3-70b.model.tinfoil.sh
+TINFOIL_REPO=tinfoilsh/confidential-llama3-3-70b
 OPENAI_API_KEY=your_api_key
 ```
 
