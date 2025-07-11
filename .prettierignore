@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.js
+!.eslintrc.js
+!jest.config.js
+
+# WASM files
+*.wasm
+wasm-exec.js
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+.DS_Store

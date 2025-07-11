@@ -1,5 +1,8 @@
-import OpenAI from 'openai';
-import type { 
+import { createHash, X509Certificate } from 'crypto';
+import https from 'https';
+import { PeerCertificate } from 'tls';
+import { OpenAI } from 'openai';
+import type {
   Chat,
   Files,
   FineTuning,
@@ -8,33 +11,31 @@ import type {
   Embeddings,
   Models,
   Moderations,
-  Beta
+  Beta,
 } from 'openai/resources';
-import { createHash, X509Certificate } from 'crypto';
-import { SecureClient, GroundTruth } from './secure-client';
-import https from 'https';
-import { PeerCertificate } from 'tls';
 import { TINFOIL_CONFIG } from './config';
+import { SecureClient, GroundTruth } from './secure-client';
 
 /**
  * Creates a proxy that allows property access and method calls on a Promise before it resolves.
  * This enables a more ergonomic API where you can chain properties and methods without explicitly
  * awaiting the promise first.
- * 
+ *
  * @param promise - A Promise that will resolve to an object
  * @returns A proxied version of the promised object that allows immediate property/method access
- * 
+ *
  * @example
  * // Instead of:
  * const client = await getClient();
  * const result = await client.someProperty.someMethod();
- * 
+ *
  * // You can write:
  * const client = createAsyncProxy(getClient());
  * const result = await client.someProperty.someMethod();
- * 
+ *
  * @template T - The type of object that the promise resolves to
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call */
 function createAsyncProxy<T extends object>(promise: Promise<T>): T {
   return new Proxy({} as T, {
     get(target, prop) {
@@ -51,27 +52,60 @@ function createAsyncProxy<T extends object>(promise: Promise<T>): T {
             const value = (obj as any)[prop];
             return typeof value === 'function' ? value.apply(obj, args) : value;
           });
-        }
+        },
       });
-    }
+    },
   });
 }
+/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call */
 
 /**
  * TinfoilAI is a wrapper around the OpenAI API client that adds additional
  * security measures through enclave verification and certificate fingerprint validation.
- * 
+ *
  * It provides:
  * - Automatic verification of Tinfoil secure enclaves
  * - Certificate fingerprint validation for each request
  * - Type-safe access to OpenAI's chat completion APIs
  */
 
+/**
+ * Configuration options for the TinfoilAI client.
+ * Extends OpenAI client options with Tinfoil-specific settings.
+ */
 interface TinfoilAIOptions {
+  /**
+   * API key for authentication. If not provided, will use TINFOIL_API_KEY environment variable.
+   */
   apiKey?: string;
-  [key: string]: any; // Allow other OpenAI client options
+  /**
+   * Additional OpenAI client options
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
+/**
+ * TinfoilAI client for secure OpenAI API access.
+ *
+ * @example
+ * ```typescript
+ * import { TinfoilAI } from 'tinfoil';
+ *
+ * const client = new TinfoilAI({
+ *   apiKey: 'your-api-key'
+ * });
+ *
+ * // Ensure client is ready
+ * await client.ready();
+ *
+ * // Make API calls
+ * const completion = await client.chat.completions.create({
+ *   model: 'gpt-3.5-turbo',
+ *   messages: [{ role: 'user', content: 'Hello!' }]
+ * });
+ * ```
+ */
 export class TinfoilAI {
   private client?: OpenAI;
   private groundTruth?: GroundTruth;
@@ -80,7 +114,9 @@ export class TinfoilAI {
 
   /**
    * Creates a new TinfoilAI instance.
+   *
    * @param options - Configuration options including apiKey and other OpenAI client options
+   * @throws {Error} If enclave verification fails during initialization
    */
   constructor(options: TinfoilAIOptions = {}) {
     // Set apiKey from options or environment variable
@@ -94,7 +130,10 @@ export class TinfoilAI {
 
   /**
    * Ensures the client is ready to use.
-   * @returns Promise that resolves when the client is initialized
+   * Must be called before making any API requests.
+   *
+   * @returns Promise that resolves when the client is initialized and enclave verification is complete
+   * @throws {Error} If enclave verification fails
    */
   public async ready(): Promise<void> {
     if (!this.readyPromise) {
@@ -105,18 +144,22 @@ export class TinfoilAI {
     return this.readyPromise;
   }
 
-  private async initClient(options?: Partial<Omit<ConstructorParameters<typeof OpenAI>[0], 'baseURL'>>): Promise<OpenAI> {
+  private async initClient(
+    options?: Partial<Omit<ConstructorParameters<typeof OpenAI>[0], 'baseURL'>>
+  ): Promise<OpenAI> {
     return this.createOpenAIClient(options);
   }
 
-  private async createOpenAIClient(options: Partial<Omit<ConstructorParameters<typeof OpenAI>[0], 'baseURL'>> = {}): Promise<OpenAI> {
+  private async createOpenAIClient(
+    options: Partial<Omit<ConstructorParameters<typeof OpenAI>[0], 'baseURL'>> = {}
+  ): Promise<OpenAI> {
     // Verify the enclave and get the certificate fingerprint
     const secureClient = new SecureClient();
-    
+
     try {
       this.groundTruth = await secureClient.verify();
     } catch (error) {
-      throw new Error(`Failed to verify enclave: ${error}`);
+      throw new Error(`Failed to verify enclave: ${String(error)}`);
     }
 
     const expectedFingerprint = this.groundTruth.publicKeyFP;
@@ -124,7 +167,7 @@ export class TinfoilAI {
     // Create a custom HTTPS agent that verifies certificate fingerprints
     const httpsAgent = new https.Agent({
       rejectUnauthorized: true,
-      checkServerIdentity: (host: string, cert: PeerCertificate) => {
+      checkServerIdentity: (_host: string, cert: PeerCertificate) => {
         if (!cert || !cert.raw) {
           throw new Error('No certificate found');
         }
@@ -138,18 +181,20 @@ export class TinfoilAI {
         const publicKeyHash = createHash('sha256').update(publicKey).digest('hex');
 
         if (publicKeyHash !== expectedFingerprint) {
-          throw new Error(`Certificate fingerprint mismatch. Got ${publicKeyHash}, expected ${expectedFingerprint}`);
+          throw new Error(
+            `Certificate fingerprint mismatch. Got ${publicKeyHash}, expected ${expectedFingerprint}`
+          );
         }
 
         return undefined; // Validation successful
-      }
+      },
     });
 
     // Create the OpenAI client with our custom configuration
-    // Note: baseURL will need to be determined by the verification process
     return new OpenAI({
       ...options,
       baseURL: TINFOIL_CONFIG.INFERENCE_BASE_URL,
+      httpAgent: httpsAgent,
     });
   }
 
@@ -162,12 +207,24 @@ export class TinfoilAI {
   private async ensureReady(): Promise<OpenAI> {
     await this.ready();
     // We can safely assert this now because ready() must have completed
-    return this.client!;
+    if (!this.client) {
+      throw new Error('Client not initialized');
+    }
+    return this.client;
   }
 
   /**
    * Access to OpenAI's chat completions API for creating chat conversations.
    * Automatically initializes the client if needed.
+   *
+   * @returns Chat API interface
+   * @example
+   * ```typescript
+   * const completion = await client.chat.completions.create({
+   *   model: 'gpt-3.5-turbo',
+   *   messages: [{ role: 'user', content: 'Hello!' }]
+   * });
+   * ```
    */
   get chat(): Chat {
     return createAsyncProxy(this.ensureReady().then(client => client.chat));
@@ -236,4 +293,4 @@ export class TinfoilAI {
   get beta(): Beta {
     return createAsyncProxy(this.ensureReady().then(client => client.beta));
   }
-} 
+}

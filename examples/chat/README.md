@@ -25,6 +25,7 @@ This example demonstrates how to use the Tinfoil client to interact with OpenAI'
 ## Running the Example
 
 Make sure you're in the examples/chat directory, then run:
+
 ```bash
 npx ts-node main.ts
 ```
@@ -37,4 +38,4 @@ The example will:
 
 2. Demonstrate a streaming chat completion with real-time output
 
-The code shows both the basic usage pattern and error handling. The API key is loaded from the `TINFOIL_API_KEY` environment variable, and the client automatically handles enclave verification and secure communication. 
+The code shows both the basic usage pattern and error handling. The API key is loaded from the `TINFOIL_API_KEY` environment variable, and the client automatically handles enclave verification and secure communication.

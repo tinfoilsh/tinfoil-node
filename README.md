@@ -17,13 +17,13 @@ npm install tinfoil
 import { TinfoilAI } from 'tinfoil';
 
 const client = new TinfoilAI({
-  apiKey: '<YOUR_API_KEY>'                 // or use TINFOIL_API_KEY env var
+  apiKey: '<YOUR_API_KEY>', // or use TINFOIL_API_KEY env var
 });
 
 // Uses identical method calls as the OpenAI client
 const completion = await client.chat.completions.create({
   messages: [{ role: 'user', content: 'Hello!' }],
-  model: 'llama3-3-70b'
+  model: 'llama3-3-70b',
 });
 ```
 
@@ -61,7 +61,6 @@ Supports Node.js 18+, Deno, Bun, Cloudflare Workers, and more. Browser usage is 
 ## API Documentation
 
 This library is a drop-in replacement for the official OpenAI Node.js client that can be used with Tinfoil. All methods and types are identical. See the [OpenAI client](https://github.com/openai/openai-node) for complete API usage and documentation.
-
 
 ## Reporting Vulnerabilities
 

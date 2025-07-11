@@ -13,13 +13,13 @@ const getEnvOrDefault = (key: string, defaultValue: string): string => {
 };
 
 const testConfig: TestConfig = {
-  apiKey: 'tinfoil'
+  apiKey: 'tinfoil',
 };
 
 describe('TinfoilAI', () => {
   it('should create a client with direct parameters', async () => {
     const client = new TinfoilAI({
-      apiKey: testConfig.apiKey
+      apiKey: testConfig.apiKey,
     });
     await client.ready();
     expect(client).toBeDefined();
@@ -41,7 +41,7 @@ describe('TinfoilAI', () => {
 
   it('should perform non-streaming chat completion', async () => {
     const client = new TinfoilAI({
-      apiKey: testConfig.apiKey
+      apiKey: testConfig.apiKey,
     });
 
     await client.ready();
@@ -49,9 +49,9 @@ describe('TinfoilAI', () => {
     const response = await client.chat.completions.create({
       messages: [
         { role: 'system', content: 'No matter what the user says, only respond with: Done.' },
-        { role: 'user', content: 'Is this a test?' }
+        { role: 'user', content: 'Is this a test?' },
       ],
-      model: 'llama3-3-70b'
+      model: 'llama3-3-70b',
     });
 
     console.log('Response received:', response.choices[0].message.content);
@@ -60,7 +60,7 @@ describe('TinfoilAI', () => {
 
   it('should handle streaming chat completion', async () => {
     const client = new TinfoilAI({
-      apiKey: testConfig.apiKey
+      apiKey: testConfig.apiKey,
     });
 
     await client.ready();
@@ -68,15 +68,15 @@ describe('TinfoilAI', () => {
     const stream = await client.chat.completions.create({
       messages: [
         { role: 'system', content: 'No matter what the user says, only respond with: Done.' },
-        { role: 'user', content: 'Is this a test?' }
+        { role: 'user', content: 'Is this a test?' },
       ],
       model: 'llama3-3-70b',
-      stream: true
+      stream: true,
     });
 
     let accumulatedContent = '';
     console.log('Chat completion streaming response:');
-    
+
     for await (const chunk of stream) {
       if (chunk.choices[0]?.delta?.content) {
         const content = chunk.choices[0].delta.content;
@@ -93,13 +93,13 @@ describe('TinfoilAI', () => {
     const tinfoilai = await createTinfoilAI(testConfig.apiKey);
 
     const { textStream } = streamText({
-        model: tinfoilai("llama3-3-70b"),
-        prompt: "say hi to me"
+      model: tinfoilai('llama3-3-70b'),
+      prompt: 'say hi to me',
     });
-    
+
     for await (const textPart of textStream) {
-        process.stdout.write(textPart);
+      process.stdout.write(textPart);
     }
     console.log();
-  });  
+  });
 });
