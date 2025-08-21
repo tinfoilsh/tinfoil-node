@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import { fetch } from 'undici';
 import {TextDecoder, TextEncoder} from 'util';
 import { TINFOIL_CONFIG } from './config';
 
@@ -157,7 +157,7 @@ export class SecureClient {
                 throw new Error(`GitHub API request failed: ${releaseResponse.status} ${releaseResponse.statusText}`);
             }
 
-            const releaseData = await releaseResponse.json();
+            const releaseData = await releaseResponse.json() as { body?: string };
 
             const eifRegex = /EIF hash: ([a-f0-9]{64})/i;
             const digestRegex = /Digest: `([a-f0-9]{64})`/;

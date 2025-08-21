@@ -8,10 +8,6 @@ interface TestConfig {
   apiKey: string;
 }
 
-const getEnvOrDefault = (key: string, defaultValue: string): string => {
-  return process.env[key] || defaultValue;
-};
-
 const testConfig: TestConfig = {
   apiKey: 'tinfoil'
 };
@@ -51,7 +47,7 @@ describe('TinfoilAI', () => {
         { role: 'system', content: 'No matter what the user says, only respond with: Done.' },
         { role: 'user', content: 'Is this a test?' }
       ],
-      model: 'llama3-3-70b'
+      model: 'llama-free'
     });
 
     console.log('Response received:', response.choices[0].message.content);
@@ -70,7 +66,7 @@ describe('TinfoilAI', () => {
         { role: 'system', content: 'No matter what the user says, only respond with: Done.' },
         { role: 'user', content: 'Is this a test?' }
       ],
-      model: 'llama3-3-70b',
+      model: 'llama-free',
       stream: true
     });
 
@@ -93,7 +89,7 @@ describe('TinfoilAI', () => {
     const tinfoilai = await createTinfoilAI(testConfig.apiKey);
 
     const { textStream } = streamText({
-        model: tinfoilai("llama3-3-70b"),
+        model: tinfoilai("llama-free"),
         prompt: "say hi to me"
     });
     

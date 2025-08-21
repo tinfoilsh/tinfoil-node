@@ -28,22 +28,21 @@
   "author": "Tinfoil",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^0.2.14",
-    "ai": "^4.3.15",
-    "dotenv": "^16.4.7",
-    "node-fetch": "^2.7.0",
-    "openai": "^4.87.3",
+    "@ai-sdk/openai-compatible": "^1.0.10",
+    "ai": "^5.0.19",
+    "dotenv": "^17.2.1",
+    "openai": "^5.13.1",
     "ts-node": "^10.9.2",
-    "undici": "^7.9.0"
+    "undici": "^7.14.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.24",
-    "@typescript-eslint/eslint-plugin": "^8.26.1",
-    "@typescript-eslint/parser": "^8.26.1",
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
     "eslint": "^8.57.0",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "~5.5.0"
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.9.2"
   }
 }
