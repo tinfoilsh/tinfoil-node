@@ -146,7 +146,7 @@ export class SecureClient {
                 throw new Error('WASM functions not available');
             }
 
-            const releaseResponse = await fetch(`https://api.github.com/repos/${this.repo}/releases/latest`, {
+            const releaseResponse = await fetch(`https://api-github-proxy.tinfoil.sh/repos/${this.repo}/releases/latest`, {
                 headers: {
                     'Accept': 'application/vnd.github.v3+json',
                     'User-Agent': 'tinfoil-node-client'
