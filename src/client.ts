@@ -99,6 +99,10 @@ export class TinfoilAI {
   private groundTruth?: GroundTruth;
   private clientPromise: Promise<OpenAI>;
   private readyPromise?: Promise<void>;
+  
+  // Expose properties for compatibility
+  public apiKey?: string;
+  public baseURL?: string;
 
   /**
    * Creates a new TinfoilAI instance.
@@ -110,6 +114,10 @@ export class TinfoilAI {
     if (options.apiKey || process.env.TINFOIL_API_KEY) {
       openAIOptions.apiKey = options.apiKey || process.env.TINFOIL_API_KEY;
     }
+    
+    // Store properties for compatibility
+    this.apiKey = openAIOptions.apiKey;
+    this.baseURL = TINFOIL_CONFIG.INFERENCE_BASE_URL;
 
     this.clientPromise = this.initClient(openAIOptions);
   }
@@ -267,4 +275,22 @@ export class TinfoilAI {
   get beta(): Beta {
     return createAsyncProxy(this.ensureReady().then(client => client.beta));
   }
-} 
+}
+
+// Namespace declaration merge to add OpenAI types to TinfoilAI
+export namespace TinfoilAI {
+  // Re-export all OpenAI namespace types
+  export import Chat = OpenAI.Chat;
+  export import Audio = OpenAI.Audio;
+  export import Beta = OpenAI.Beta;
+  export import Batches = OpenAI.Batches;
+  export import Completions = OpenAI.Completions;
+  export import Embeddings = OpenAI.Embeddings;
+  export import Files = OpenAI.Files;
+  export import FineTuning = OpenAI.FineTuning;
+  export import Images = OpenAI.Images;
+  export import Models = OpenAI.Models;
+  export import Moderations = OpenAI.Moderations;
+  export import Uploads = OpenAI.Uploads;
+  export import VectorStores = OpenAI.VectorStores;
+}
