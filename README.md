@@ -5,6 +5,10 @@
 
 A Node.js wrapper around the OpenAI client that verifies enclave attestation and certificate fingerprints when using Tinfoil inference.
 
+## Requirements
+
+Node 20.18.1 and higher.
+
 ## Installation
 
 ```bash
@@ -53,10 +57,6 @@ npx ts-node main.ts
 ```
 
 The example demonstrates streaming chat completions with the Tinfoil API wrapper.
-
-## Runtime Support
-
-Supports Node.js 18+, Deno, Bun, Cloudflare Workers, and more. Browser usage is disabled by default for security. See [OpenAI Node.js client](https://github.com/openai/openai-node) for complete runtime compatibility.
 
 ## API Documentation
 
