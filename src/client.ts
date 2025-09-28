@@ -15,6 +15,7 @@ import type { AttestationResponse } from "./verifier";
 import type { VerificationDocument } from "./verifier";
 import { TINFOIL_CONFIG } from "./config";
 import { createEncryptedBodyFetch } from "./encrypted-body-fetch";
+import { createForwardingEncryptedFetch } from "./encrypted-forwarding-fetch";
 
 /**
  * Detects if the code is running in a real browser environment.
@@ -81,6 +82,8 @@ interface TinfoilAIOptions {
   baseURL?: string;
   /** Override the config GitHub repository */
   configRepo?: string;
+  /** POST endpoint to send requests to (forwarding proxy) */
+  proxyURL?: string;
   [key: string]: any; // Allow other OpenAI client options
 }
 
@@ -90,6 +93,7 @@ export class TinfoilAI {
   private readyPromise?: Promise<void>;
   private configRepo?: string;
   private verificationDocument?: VerificationDocument;
+  private proxyURL?: string;
 
   // Expose properties for compatibility
   public apiKey?: string;
@@ -108,7 +112,10 @@ export class TinfoilAI {
 
     // Store properties for compatibility
     this.apiKey = openAIOptions.apiKey;
-    this.baseURL = options.baseURL || TINFOIL_CONFIG.INFERENCE_BASE_URL;
+    const providedBaseURL = options.baseURL || TINFOIL_CONFIG.INFERENCE_BASE_URL;
+    this.proxyURL = options.proxyURL;
+    // Inference server base URL (the enclave host with the HPKE key)
+    this.baseURL = providedBaseURL;
     this.configRepo =
       options.configRepo || TINFOIL_CONFIG.INFERENCE_PROXY_REPO;
 
@@ -158,8 +165,11 @@ export class TinfoilAI {
     const hpkePublicKey = this.verificationDocument.enclaveMeasurement.hpkePublicKey;
     const clientOptions: ConstructorParameters<typeof OpenAI>[0] = {
       ...options,
-      baseURL: this.baseURL,
-      fetch: createEncryptedBodyFetch(this.baseURL!, hpkePublicKey),
+      // OpenAI will resolve paths relative to this; when proxying, set proxy URL
+      baseURL: this.proxyURL || this.baseURL,
+      fetch: this.proxyURL
+        ? createForwardingEncryptedFetch(this.baseURL!, this.proxyURL!)
+        : createEncryptedBodyFetch(this.baseURL!, hpkePublicKey),
     };
 
     // Enable dangerouslyAllowBrowser in Node.js with WASM (which makes OpenAI SDK think we're in a browser)

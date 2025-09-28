@@ -95,7 +95,7 @@ const digest = await verifier.fetchLatestDigest("tinfoilsh/repo");
 
 ### High-level Orchestration API
 
-- `loadVerifier(wasmUrl?)` boots the verifier with state management and returns an enhanced client.
+- `loadVerifier()` boots the verifier with state management and returns an enhanced client.
 - `client.subscribe(callback)` subscribes to real-time verification state updates.
 - `client.runVerification({ repo?, enclaveHost?, digest?, onUpdate? })` orchestrates the full flow and returns a structured result with step statuses and a comparison outcome. Both `repo` and `enclaveHost` default to values from `TINFOIL_CONFIG`.
 
@@ -198,7 +198,59 @@ await verifier.runVerification();
 // });
 
 unsubscribe();
+
 ```
+
+## EHBP Request Builder (no send)
+
+If you need to generate an EHBP‑encrypted HTTP request without sending it (e.g., to forward through a different destination), use the request builder:
+
+```ts
+import { createEhbpRequestBuilder, TINFOIL_CONFIG } from "tinfoil";
+
+// Fetches HPKE public key from the config host and caches identity
+const builder = createEhbpRequestBuilder(TINFOIL_CONFIG.INFERENCE_BASE_URL);
+
+// Build an encrypted Request targeting any destination URL
+const encryptedReq = await builder.build(
+  new Request("https://your-proxy.example/forward", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ hello: "world" }),
+  }),
+);
+
+// Now you can send the encrypted Request yourself
+const resp = await fetch(encryptedReq);
+```
+
+Notes:
+- The encryption uses the HPKE public key fetched from the config host, but the Request URL you pass into `build()` determines where you send it.
+- The execution environment must be a secure context with WebCrypto SubtleCrypto available (HTTPS or localhost in browsers).
+
+## Forwarding Mode (proxy + enclave key)
+
+You can route all requests to any proxy POST endpoint while keeping bodies encrypted under the HPKE public key of the inference (enclave) host.
+
+```ts
+import { TinfoilAI, TINFOIL_CONFIG } from "tinfoil";
+
+const client = new TinfoilAI({
+  apiKey: "<YOUR_API_KEY>",
+  // Proxy endpoint to receive a single POST with EHBP payload + forwarding headers
+  proxyURL: "https://proxy.example/v1/",
+});
+
+// All requests go to the proxy URL, but are EHBP‑encrypted using the
+// HPKE public key fetched from baseURL (the default enclave host).
+const completion = await client.chat.completions.create({
+  messages: [{ role: "user", content: "Hello!" }],
+  model: "llama3-3-70b",
+});
+```
+
+Advanced:
+- For lower‑level access (outside the OpenAI client), use `createForwardingEncryptedFetch(inferenceBaseURL, proxyURL, options?)` which returns a `fetch` that encrypts for the inference host and sends to the proxy.
 
 ## Testing
 

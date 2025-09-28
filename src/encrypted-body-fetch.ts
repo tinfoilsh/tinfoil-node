@@ -1,11 +1,7 @@
 import type { Transport as EhbpTransport } from "ehbp";
-import { isRealBrowser } from "./env";
-
-type EhbpModule = typeof import("ehbp");
+import { getEhbpModule, ensureEhbpEnvironment, __setEhbpModuleForTests as __setEhbpModuleForTestsShared, __resetEhbpModuleStateForTests as __resetEhbpModuleStateForTestsShared } from "./ehbp-module";
 
 const transportCache = new Map<string, Promise<EhbpTransport>>();
-let ehbpModulePromise: Promise<EhbpModule> | null = null;
-let ehbpModuleOverride: EhbpModule | undefined;
 
 // Public API
 export function normalizeEncryptedBodyRequestArgs(
@@ -66,35 +62,6 @@ export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey: string)
   }) as typeof fetch;
 }
 
-// Private helper functions
-/**
- * Load the ESM-only `ehbp` module in both browsers and Node.js CommonJS tests.
- *
- * - Browsers/Next.js: use a standard dynamic import so bundlers can statically
- *   include `ehbp` in the client bundle.
- * - Node.js (CJS tests/builds): avoid TypeScript transpiling import() to
- *   require(), which throws ERR_REQUIRE_ESM. Instead, create a runtime
- *   dynamic import via new Function so it remains a real import() call.
- */
-function getEhbpModule(): Promise<EhbpModule> {
-  if (ehbpModuleOverride) {
-    return Promise.resolve(ehbpModuleOverride);
-  }
-  if (!ehbpModulePromise) {
-    if (isRealBrowser()) {
-      // Let the bundler include the module in browser builds
-      ehbpModulePromise = import("ehbp");
-    } else {
-      const dynamicImport = new Function(
-        "specifier",
-        "return import(specifier);",
-      ) as (specifier: string) => Promise<EhbpModule>;
-      ehbpModulePromise = dynamicImport("ehbp");
-    }
-  }
-  return ehbpModulePromise;
-}
-
 async function getTransportForOrigin(origin: string): Promise<EhbpTransport> {
   const cached = transportCache.get(origin);
   if (cached) {
@@ -103,18 +70,7 @@ async function getTransportForOrigin(origin: string): Promise<EhbpTransport> {
 
   const transportPromise = (async () => {
     const { Identity, createTransport } = await getEhbpModule();
-    
-    // Ensure we're in a secure context with WebCrypto Subtle available (required by EHBP)
-    if (typeof globalThis !== 'undefined') {
-      const isSecure = (globalThis as any).isSecureContext !== false;
-      const hasSubtle = !!(globalThis.crypto && (globalThis.crypto as Crypto).subtle);
-      if (!isSecure || !hasSubtle) {
-        const reason = !isSecure
-          ? 'insecure context (use HTTPS or localhost)'
-          : 'missing WebCrypto SubtleCrypto';
-        throw new Error(`EHBP requires a secure browser context: ${reason}`);
-      }
-    }
+    ensureEhbpEnvironment();
     
     const clientIdentity = await Identity.generate();
     return createTransport(origin, clientIdentity);
@@ -128,15 +84,11 @@ async function getTransportForOrigin(origin: string): Promise<EhbpTransport> {
 }
 
 // Test utilities
-export function __setEhbpModuleForTests(
-  module: EhbpModule | undefined,
-): void {
-  ehbpModuleOverride = module;
-  ehbpModulePromise = module ? Promise.resolve(module) : null;
+export function __setEhbpModuleForTests(module: Parameters<typeof __setEhbpModuleForTestsShared>[0]): void {
+  __setEhbpModuleForTestsShared(module);
 }
 
 export function __resetEhbpModuleStateForTests(): void {
-  ehbpModuleOverride = undefined;
-  ehbpModulePromise = null;
+  __resetEhbpModuleStateForTestsShared();
   transportCache.clear();
 }
