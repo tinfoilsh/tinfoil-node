@@ -16,6 +16,9 @@ import type { VerificationDocument } from "./verifier";
 import { TINFOIL_CONFIG } from "./config";
 import { createEncryptedBodyFetch } from "./encrypted-body-fetch";
 import { createForwardingEncryptedFetch } from "./encrypted-forwarding-fetch";
+import https from "node:https";
+import tls, { checkServerIdentity as tlsCheckServerIdentity } from "node:tls";
+import { X509Certificate, createHash } from "node:crypto";
 
 /**
  * Detects if the code is running in a real browser environment.
@@ -163,13 +166,63 @@ export class TinfoilAI {
     }
 
     const hpkePublicKey = this.verificationDocument.enclaveMeasurement.hpkePublicKey;
+    const tlsPublicKeyFingerprint = this.verificationDocument.enclaveMeasurement.tlsPublicKeyFingerprint;
+    
+    let fetchFunction: typeof fetch;
+    
+    if (this.proxyURL) {
+      fetchFunction = createForwardingEncryptedFetch(this.baseURL!, this.proxyURL!);
+    } else if (hpkePublicKey) {
+      // HPKE available: use encrypted body fetch
+      fetchFunction = createEncryptedBodyFetch(this.baseURL!, hpkePublicKey);
+    } else {
+      // HPKE not available: check if we're in a browser
+      if (isRealBrowser()) {
+        throw new Error(
+          "HPKE public key not available and TLS-only verification is not supported in browsers. " +
+          "Only HPKE-enabled enclaves can be used in browser environments."
+        );
+      }
+      
+      // Node.js environment: fall back to TLS-only verification
+      const httpsAgent = new https.Agent({
+        checkServerIdentity: (
+          host: string,
+          cert: tls.PeerCertificate,
+        ): Error | undefined => {
+          if (!cert.pubkey) {
+            throw new Error("No public key available in certificate");
+          }
+          const x509 = new X509Certificate(cert.raw);
+          const publicKeyDer = x509.publicKey.export({
+            type: "spki",
+            format: "der",
+          });
+          const pubKeyFP = createHash("sha256").update(publicKeyDer).digest("hex");
+          if (pubKeyFP !== tlsPublicKeyFingerprint) {
+            throw new Error(
+              `Certificate public key fingerprint mismatch. Expected: ${tlsPublicKeyFingerprint}, Got: ${pubKeyFP}`,
+            );
+          }
+
+          return tlsCheckServerIdentity(host, cert);
+        },
+      });
+      
+      fetchFunction = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const finalInit = {
+          ...init,
+          agent: httpsAgent,
+        } as any; // Node.js fetch accepts agent in init options
+        return fetch(input, finalInit);
+      }) as typeof fetch;
+    }
+
     const clientOptions: ConstructorParameters<typeof OpenAI>[0] = {
       ...options,
       // OpenAI will resolve paths relative to this; when proxying, set proxy URL
       baseURL: this.proxyURL || this.baseURL,
-      fetch: this.proxyURL
-        ? createForwardingEncryptedFetch(this.baseURL!, this.proxyURL!)
-        : createEncryptedBodyFetch(this.baseURL!, hpkePublicKey),
+      fetch: fetchFunction,
     };
 
     // Enable dangerouslyAllowBrowser in Node.js with WASM (which makes OpenAI SDK think we're in a browser)

@@ -8,7 +8,8 @@
  * 1) REMOTE ATTESTATION (Enclave Verification)
  *    - Invokes Go WASM `verifyEnclave(host)` against the target enclave hostname
  *    - Verifies vendor certificate chains inside WASM (AMD SEV-SNP / Intel TDX)
- *    - Returns the enclave's runtime measurement and public keys (TLS fingerprint, HPKE)
+ *    - Returns the enclave's runtime measurement and public keys (TLS fingerprint, optionally HPKE)
+ *    - Falls back to TLS-only verification if HPKE public key is not available
  *
  * 2) CODE INTEGRITY (Release Verification)
  *    - Fetches the latest release notes via the Tinfoil GitHub proxy and extracts a digest
@@ -119,7 +120,7 @@ const PLATFORM_TYPES = {
  */
 export interface AttestationResponse {
   tlsPublicKeyFingerprint: string;
-  hpkePublicKey: string;
+  hpkePublicKey?: string; // Optional - falls back to TLS-only verification if not available
   measurement: AttestationMeasurement;
 }
 
@@ -385,10 +386,7 @@ export class Verifier {
           reject(new Error('Missing tls_public_key in attestation response'));
           return;
         }
-        if (!attestationResponse?.hpke_public_key) {
-          reject(new Error('Missing hpke_public_key in attestation response - EHBP not supported by this enclave'));
-          return;
-        }
+        // Note: hpke_public_key is optional - if not present, falls back to TLS-only verification
 
         // Parse runtime measurement
         let parsedRuntimeMeasurement: AttestationMeasurement;
@@ -406,11 +404,15 @@ export class Verifier {
           return;
         }
 
-        const result = {
+        const result: AttestationResponse = {
           tlsPublicKeyFingerprint: attestationResponse.tls_public_key,
-          hpkePublicKey: attestationResponse.hpke_public_key,
           measurement: parsedRuntimeMeasurement,
         };
+        
+        // Only include HPKE public key if available
+        if (attestationResponse.hpke_public_key) {
+          result.hpkePublicKey = attestationResponse.hpke_public_key;
+        }
         
         resolve(result);
         
