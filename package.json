@@ -7,7 +7,8 @@
   "types": "dist/index.d.ts",
   "browser": {
     "./dist/index.js": "./dist/esm/index.browser.js",
-    "./dist/esm/index.js": "./dist/esm/index.browser.js"
+    "./dist/esm/index.js": "./dist/esm/index.browser.js",
+    "./dist/verification-center/index.js": "./dist/esm/verification-center/index.js"
   },
   "exports": {
     ".": {
@@ -43,12 +44,18 @@
       "types": "./dist/config.d.ts",
       "import": "./dist/esm/config.js",
       "require": "./dist/config.js"
+    },
+    "./verification-center": {
+      "types": "./dist/verification-center/index.d.ts",
+      "require": "./dist/verification-center/index.js",
+      "import": "./dist/esm/verification-center/index.js",
+      "default": "./dist/verification-center/index.js"
     }
   },
   "scripts": {
     "build": "npm run build:cjs && npm run build:esm",
-    "build:cjs": "tsc && cp src/wasm-exec.js dist/",
-    "build:esm": "tsc -p tsconfig.esm.json && cp src/wasm-exec.js dist/esm/",
+    "build:cjs": "tsc && cp src/wasm-exec.js dist/ && rsync -a --include='*/' --include='*.css' --exclude='*' src/verification-center/ dist/verification-center/ || true",
+    "build:esm": "tsc -p tsconfig.esm.json && cp src/wasm-exec.js dist/esm/ && rsync -a --include='*/' --include='*.css' --exclude='*' src/verification-center/ dist/esm/verification-center/ || true",
     "test": "bash -lc 'rm -rf .node-tests && tsc -p tsconfig.node-test.json && cp src/wasm-exec.js .node-tests/ && node --test $(find .node-tests -name \"*.test.js\" -print)'",
     "lint": "eslint src/**/*.ts",
     "prepublishOnly": "npm run build"
@@ -81,12 +88,45 @@
     "openai": "^5.13.1",
     "ts-node": "^10.9.2"
   },
+  "peerDependencies": {
+    "@heroicons/react": "*",
+    "@xyflow/react": "*",
+    "framer-motion": "*",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19",
+    "react-icons": "*"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "@xyflow/react": {
+      "optional": true
+    },
+    "@heroicons/react": {
+      "optional": true
+    },
+    "react-icons": {
+      "optional": true
+    },
+    "framer-motion": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/node": "^24.3.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
     "eslint": "^8.57.0",
     "jsdom": "^25.0.0",
     "typescript": "^5.9.2"
-  }
+  },
+  "sideEffects": [
+    "**/*.css"
+  ]
 }

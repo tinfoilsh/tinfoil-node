@@ -70,10 +70,6 @@ const completion = await client.chat.completions.create({
 
 This package exposes verification helpers that load the Go-based WebAssembly verifier once per process and provide structured, stepwise attestation results you can use in applications (e.g., to show progress, log transitions, or gate features).
 
-The verification functionality is split into two modules:
-- `verifier.ts`: Core verification logic with low-level attestation methods
-- `verification-runner.ts`: Higher-level orchestration with state management and subscriptions
-
 ### Core Verifier API
 
 ```typescript
@@ -99,7 +95,7 @@ const digest = await verifier.fetchLatestDigest("tinfoilsh/repo");
 - `client.subscribe(callback)` subscribes to real-time verification state updates.
 - `client.runVerification({ configRepo?, serverURL?, releaseDigest?, onUpdate? })` orchestrates the full flow and returns a structured result with step statuses and a comparison outcome. Both `configRepo` and `serverURL` default to values from `TINFOIL_CONFIG`.
 
-### End-to-end orchestration
+### End-to-end verification 
 
 ```typescript
 import { loadVerifier, TINFOIL_CONFIG } from "tinfoil";
@@ -161,6 +157,84 @@ await verifier.runVerification();
 // });
 
 unsubscribe();
+```
+
+## Verification Center (React UI)
+
+The Verification Center is a drop‑in React component that visualizes the full verification process with status, steps, and an optional flow diagram. It runs the same local, WASM‑based attestation as the helpers above and can also display a precomputed `VerificationDocument`.
+
+Note: Browser‑only (React + DOM). Rendering this component outside a real browser (e.g., Node/SSR server) throws a clear error. For Node usage, use the headless verification helpers instead.
+
+### Install UI Peer Deps
+
+The UI lives under the `tinfoil/verification-center` export and relies on a few peer dependencies. Install them if you don’t already use them:
+
+```bash
+npm install react react-dom @xyflow/react framer-motion @heroicons/react react-icons
+```
+
+Notes:
+- CSS for `@xyflow/react` and the internal flow diagram is imported by the component. The package marks CSS as side effects, so bundlers keep it. Ensure your bundler allows CSS imports from `node_modules`.
+
+
+### Import
+
+```tsx
+// Named or default import
+import { VerificationCenter } from 'tinfoil/verification-center'
+// or
+import VerificationCenter from 'tinfoil/verification-center'
+```
+
+### Props
+
+```ts
+import type { VerificationDocument } from 'tinfoil'
+
+type VerificationCenterProps = {
+  isDarkMode?: boolean // Default: true
+  flowDiagramExpanded?: boolean // Control expanded/collapsed state
+  onFlowDiagramToggle?: () => void // Called when the header is toggled
+  showVerificationFlow?: boolean // Show the flow diagram (default: true)
+  verificationDocument?: VerificationDocument // Use precomputed data instead of running
+}
+```
+
+Behavior:
+- If `verificationDocument` is provided, the UI renders that state immediately and does not start a run.
+- Without it, the UI calls the verifier and streams live progress; the “Verify Again” button forces a fresh run (cache is cleared).
+
+
+### Use a Precomputed VerificationDocument
+
+If you already verified using the SDK, you can pass the `VerificationDocument` to avoid re‑running.
+
+Using the TinfoilAI client:
+
+```tsx
+import { useEffect, useState } from 'react'
+import { TinfoilAI } from 'tinfoil'
+import { VerificationCenter } from 'tinfoil/verification-center'
+import type { VerificationDocument } from 'tinfoil'
+
+export function VerifiedModal() {
+  const [doc, setDoc] = useState<VerificationDocument | null>(null)
+
+  useEffect(() => {
+    const run = async () => {
+      const client = new TinfoilAI({ apiKey: process.env.NEXT_PUBLIC_TINFOIL_API_KEY })
+      await client.ready()
+      setDoc(await client.getVerificationDocument())
+    }
+    void run()
+  }, [])
+
+  return (
+    <div style={{ height: 520 }}>
+      <VerificationCenter isDarkMode verificationDocument={doc ?? undefined} />
+    </div>
+  )
+}
 ```
 
 ## Testing
