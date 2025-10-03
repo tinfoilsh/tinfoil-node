@@ -11,7 +11,7 @@ import type {
   Moderations,
   Responses,
 } from "openai/resources";
-import { SecureClient } from "./secure-client";
+import { SecureClient } from "tinfoil/secure-client";
 import type { VerificationDocument } from "./verifier";
 import { TINFOIL_CONFIG } from "./config";
 import { isRealBrowser } from "./env";

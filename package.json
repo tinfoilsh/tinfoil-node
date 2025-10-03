@@ -3,7 +3,7 @@
   "version": "0.8.4",
   "description": "Tinfoil secure OpenAI client wrapper",
   "main": "dist/index.js",
-  "module": "dist/esm/index.js",
+  "module": "dist/esm/index.browser.js",
   "types": "dist/index.d.ts",
   "browser": {
     "./dist/index.js": "./dist/esm/index.browser.js",
@@ -13,14 +13,16 @@
     ".": {
       "types": "./dist/index.d.ts",
       "browser": "./dist/esm/index.browser.js",
-      "import": "./dist/esm/index.js",
+      "node": "./dist/esm/index.js",
+      "import": "./dist/esm/index.browser.js",
       "require": "./dist/index.js",
-      "default": "./dist/index.js"
+      "default": "./dist/esm/index.browser.js"
     },
     "./client": {
       "types": "./dist/client.d.ts",
       "browser": "./dist/esm/client.browser.js",
-      "import": "./dist/esm/client.js",
+      "node": "./dist/esm/client.js",
+      "import": "./dist/esm/client.browser.js",
       "require": "./dist/client.js"
     },
     "./ai-sdk-provider": {
@@ -46,7 +48,8 @@
     "./secure-client": {
       "types": "./dist/secure-client.d.ts",
       "browser": "./dist/esm/secure-client.browser.js",
-      "import": "./dist/esm/secure-client.js",
+      "node": "./dist/esm/secure-client.js",
+      "import": "./dist/esm/secure-client.browser.js",
       "require": "./dist/secure-client.js"
     }
   },

@@ -6,4 +6,4 @@ export * from "./verifier";
 export * from "./verification-runner";
 export * from "./ai-sdk-provider";
 export * from "./config";
-export * from "./secure-client";
+export * from "./secure-client.browser";

@@ -7,7 +7,7 @@ export * from "./verifier";
 export * from "./verification-runner";
 export * from "./ai-sdk-provider";
 export * from "./config";
-export * from "./secure-client";
+export * from "tinfoil/secure-client";
 
 // Re-export OpenAI utility types and classes that users might need
 // Using public exports from the main OpenAI package instead of deep imports
