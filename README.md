@@ -3,7 +3,9 @@
 [![Build Status](https://github.com/tinfoilsh/tinfoil-node/actions/workflows/test.yml/badge.svg)](https://github.com/tinfoilsh/tinfoil-node/actions)
 [![NPM version](https://img.shields.io/npm/v/tinfoil.svg)](https://npmjs.org/package/tinfoil)
 
-A Node.js wrapper around the OpenAI client that verifies enclave attestation and routes OpenAI-bound traffic through an [EHBP](https://github.com/tinfoilsh/encrypted-http-body-protocol)-secured transport when using Tinfoil inference. EHBP encrypts all payloads directly to an attested enclave using [HPKE (RFC 9180)](https://www.rfc-editor.org/rfc/rfc9180.html).
+This client library provides secure and convenient access to the Tinfoil Priavate Inference endpoints from TypeScript or JavaScript.
+
+It is a wrapper around the OpenAI client that verifies enclave attestation and routes traffic to the Tinfoil Private Inference endpoints through an [EHBP](https://github.com/tinfoilsh/encrypted-http-body-protocol)-secured transport. EHBP encrypts all payloads directly to an attested enclave using [HPKE (RFC 9180)](https://www.rfc-editor.org/rfc/rfc9180.html).
 
 ## Installation
 
@@ -54,7 +56,7 @@ const client = new TinfoilAI({
 await client.ready();
 
 const completion = await client.chat.completions.create({
-  model: 'llama-free',
+  model: 'llama3-3-70b',
   messages: [{ role: 'user', content: 'Hello!' }]
 });
 ```
@@ -63,18 +65,13 @@ const completion = await client.chat.completions.create({
 
 - Modern browsers with ES2020 support
 - WebAssembly support for enclave verification
-- Secure context (HTTPS or localhost) with WebCrypto SubtleCrypto (required by EHBP)
-
-> **Note**
-> The EHBP transport now accepts `http://` origins (for example when developing against a `localhost` proxy). Payloads remain HPKE-encrypted end to end, while TLS-only fallback logic continues to require HTTPS because it relies on certificate pinning.
 
 
 ## Verification helpers
 
 This package exposes verification helpers that load the Go-based WebAssembly verifier once per process and provide structured, stepwise attestation results you can use in applications (e.g., to show progress, log transitions, or gate features).
 
-The verification functionality is split into two modules:
-- `verifier.ts`: Core verification logic with low-level attestation methods
+The verification functionality is contained in `verifier.ts`.
 
 
 ### Core Verifier API
@@ -106,8 +103,6 @@ The project includes both unit tests and integration tests:
 npm test
 ```
 
-This runs the test suite with unit tests and mocked components. These tests don't require network access and run quickly.
-
 ### Running Integration Tests
 
 ```bash
@@ -121,39 +116,9 @@ This runs the full test suite including integration tests that:
 
 Integration tests are skipped by default to keep the test suite fast and avoid network dependencies during development.
 
-## Running the Chat Example
+## Running examples
 
-The chat example demonstrates both streaming chat completions and real-time attestation verification with a visual progress UI.
-
-1. Clone the repository
-
-2. Install dependencies:
-
-```bash
-npm install
-npm run build
-```
-
-3. Optionally create a `.env` file with your configuration:
-
-```bash
-TINFOIL_API_KEY=<YOUR_API_KEY>
-# Optional: Enable WASM debug logs
-# TINFOIL_ENABLE_WASM_LOGS=true
-```
-
-4. Run the example:
-
-```bash
-cd examples/chat
-npx ts-node main.ts
-```
-
-The example will:
-- Display a real-time verification progress showing each attestation step
-- Verify the enclave's runtime and code measurements
-- Compare measurements using platform-specific logic
-- Stream chat completions through the verified secure channel
+See [examples/README.md](https://github.com/tinfoilsh/tinfoil-node/blob/main/examples/README.md).
 
 ## API Documentation
 
