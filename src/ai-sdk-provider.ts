@@ -9,8 +9,8 @@ interface CreateTinfoilAIOptions {
 }
 
 export async function createTinfoilAI(apiKey: string, options: CreateTinfoilAIOptions = {}) {
-  const baseURL = options.baseURL || TINFOIL_CONFIG.INFERENCE_BASE_URL;
-  const enclaveURL = options.enclaveURL || TINFOIL_CONFIG.ENCLAVE_URL;
+  const baseURL = options.baseURL;
+  const enclaveURL = options.enclaveURL;
   const configRepo = options.configRepo || TINFOIL_CONFIG.INFERENCE_PROXY_REPO;
 
   const secureClient = new SecureClient({
@@ -21,9 +21,15 @@ export async function createTinfoilAI(apiKey: string, options: CreateTinfoilAIOp
 
   await secureClient.ready();
 
+  // Get the baseURL from SecureClient after initialization
+  const finalBaseURL = baseURL || secureClient.getBaseURL();
+  if (!finalBaseURL) {
+    throw new Error("Unable to determine baseURL for AI SDK provider");
+  }
+
   return createOpenAICompatible({
     name: "tinfoil",
-    baseURL: baseURL.replace(/\/$/, ""),
+    baseURL: finalBaseURL.replace(/\/$/, ""),
     apiKey: apiKey,
     fetch: secureClient.fetch,
   });

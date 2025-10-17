@@ -194,7 +194,8 @@ function compareMeasurementsError(
 
   if (codeMeasurement.type === PLATFORM_TYPES.SNP_TDX_MULTI_PLATFORM_V1) {
     switch (runtimeMeasurement.type) {
-      case PLATFORM_TYPES.TDX_GUEST_V1: {
+      case PLATFORM_TYPES.TDX_GUEST_V1:
+      case PLATFORM_TYPES.TDX_GUEST_V2: {
         if (codeMeasurement.registers.length < 3 || runtimeMeasurement.registers.length < 4) {
           return new Error(MEASUREMENT_ERROR_MESSAGES.FEW_REGISTERS);
         }
@@ -305,8 +306,10 @@ export class Verifier {
   protected readonly configRepo: string;
 
   constructor(options?: { serverURL?: string; configRepo?: string }) {
-    const serverURL = options?.serverURL ?? TINFOIL_CONFIG.INFERENCE_BASE_URL;
-    this.serverURL = new URL(serverURL).hostname;
+    if (!options?.serverURL) {
+      throw new Error("serverURL is required for Verifier");
+    }
+    this.serverURL = new URL(options.serverURL).hostname;
     this.configRepo = options?.configRepo ?? TINFOIL_CONFIG.INFERENCE_PROXY_REPO;
   }
 
@@ -378,7 +381,7 @@ export class Verifier {
 
   /**
    * Fetch the latest release digest from GitHub
-   * @param configRepo - Repository name (e.g., "tinfoilsh/confidential-inference-proxy")
+   * @param configRepo - Repository name (e.g., "tinfoilsh/confidential-model-router")
    * @returns The digest hash
    */
   public async fetchLatestDigest(configRepo?: string): Promise<string> {

@@ -66,14 +66,26 @@ describe("compareMeasurements parity with reference Equals()", () => {
     assert.match(fail.error?.message || "", /multi-platform SEV-SNP measurement mismatch/);
   });
 
+  it("code multi → tdx-v2 mapping: rtmr1, rtmr2", () => {
+    const codeMulti = { type: SNP_TDX_MULTI_PLATFORM_V1, registers: ["snp", "RTMR1_VAL", "RTMR2_VAL"] };
+    const rtTdxV2Pass = { type: TDX_GUEST_V2, registers: ["x", "y", "RTMR1_VAL", "RTMR2_VAL"] };
+    const rtTdxV2Fail = { type: TDX_GUEST_V2, registers: ["x", "y", "DIFF", "RTMR2_VAL"] };
+
+    assert.strictEqual(compareMeasurements(codeMulti, rtTdxV2Pass), true);
+
+    const fail = compareMeasurementsDetailed(codeMulti, rtTdxV2Fail);
+    assert.strictEqual(fail.match, false);
+    assert.match(fail.error?.message || "", /RTMR1 mismatch/);
+  });
+
   it("code multi → unsupported runtime type", () => {
     const codeMulti = { type: SNP_TDX_MULTI_PLATFORM_V1, registers: ["snp", "A", "B"] };
-    const rtUnsupported = { type: TDX_GUEST_V2, registers: ["X", "Y"] };
+    const rtUnsupported = { type: "https://tinfoil.sh/predicate/unsupported-platform/v1", registers: ["X", "Y"] };
     const res = compareMeasurementsDetailed(codeMulti, rtUnsupported);
     assert.strictEqual(res.match, false);
     assert.match(
       res.error?.message || "",
-      /unsupported enclave platform for multi-platform code measurements: https:\/\/tinfoil\.sh\/predicate\/tdx-guest\/v2/,
+      /unsupported enclave platform for multi-platform code measurements: https:\/\/tinfoil\.sh\/predicate\/unsupported-platform\/v1/,
     );
   });
 

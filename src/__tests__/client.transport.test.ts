@@ -14,8 +14,8 @@ describe("Secure transport integration", () => {
       measurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
     }));
     const mockFetch = t.mock.fn(async () => new Response(null));
-    const createEncryptedBodyFetchMock = t.mock.fn(
-      (_baseURL: string, _hpkePublicKey: string, _enclaveURL?: string) => mockFetch,
+    const createSecureFetchMock = t.mock.fn(
+      (_baseURL: string, _enclaveURL?: string, _hpkePublicKey?: string, _tlsPublicKeyFingerprint?: string) => mockFetch,
     );
     const openAIConstructorMock = t.mock.fn(function (this: unknown, options: {
       fetch?: typeof fetch;
@@ -59,8 +59,8 @@ describe("Secure transport integration", () => {
             }
           },
         },
-        "./encrypted-body-fetch": {
-          createEncryptedBodyFetch: createEncryptedBodyFetchMock,
+        "tinfoil/secure-fetch": {
+          createSecureFetch: createSecureFetchMock,
         },
         openai: Object.assign(openAIConstructorMock, {
           OpenAI: openAIConstructorMock,
@@ -72,15 +72,23 @@ describe("Secure transport integration", () => {
       ["../client"],
       async () => {
         const { TinfoilAI } = await import("../tinfoilai");
-        const client = new TinfoilAI({ apiKey: "test" });
+        const testBaseURL = "https://test-router.tinfoil.sh/v1/";
+        const testEnclaveURL = "https://test-router.tinfoil.sh";
+        
+        const client = new TinfoilAI({ 
+          apiKey: "test",
+          baseURL: testBaseURL,
+          enclaveURL: testEnclaveURL
+        });
         await client.ready();
 
         assert.strictEqual(verifyMock.mock.callCount(), 1);
-        assert.strictEqual(createEncryptedBodyFetchMock.mock.callCount(), 1);
-        assert.deepStrictEqual(createEncryptedBodyFetchMock.mock.calls[0]?.arguments, [
-          TINFOIL_CONFIG.INFERENCE_BASE_URL,
+        assert.strictEqual(createSecureFetchMock.mock.callCount(), 1);
+        assert.deepStrictEqual(createSecureFetchMock.mock.calls[0]?.arguments, [
+          testBaseURL,
+          testEnclaveURL,
           "mock-hpke-public-key",
-          TINFOIL_CONFIG.ENCLAVE_URL,
+          "fingerprint",
         ]);
         assert.strictEqual(openAIConstructorMock.mock.callCount(), 1);
         const options = openAIConstructorMock.mock.calls[0]?.arguments[0] as {
@@ -88,7 +96,7 @@ describe("Secure transport integration", () => {
           fetch: typeof fetch;
         } | undefined;
         assert.ok(options, "OpenAI constructor options should be provided");
-        assert.strictEqual(options.baseURL, TINFOIL_CONFIG.INFERENCE_BASE_URL);
+        assert.strictEqual(options.baseURL, testBaseURL);
         assert.ok(options.fetch, "fetch function should be provided");
       },
     );
@@ -125,6 +133,10 @@ describe("Secure transport integration", () => {
             
             async getVerificationDocument() {
               return mockVerificationDocument;
+            }
+            
+            getBaseURL() {
+              return "https://test-router.tinfoil.sh/v1/";
             }
             
             get fetch() {

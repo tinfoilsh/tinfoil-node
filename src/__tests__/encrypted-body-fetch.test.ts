@@ -1,6 +1,6 @@
 import { describe, it, mock, beforeEach } from "node:test";
 import assert from "node:assert";
-import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getHPKEKey, createEncryptedBodyFetch, resetTransport } from "../encrypted-body-fetch";
+import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getHPKEKey, createEncryptedBodyFetch } from "../encrypted-body-fetch";
 import { Identity, PROTOCOL } from "ehbp";
 
 describe("encrypted-body-fetch", () => {
@@ -134,7 +134,6 @@ describe("encrypted-body-fetch", () => {
 
     beforeEach(() => {
       originalFetch = globalThis.fetch;
-      resetTransport();
     });
 
     it("rejects request when HPKE key mismatch occurs", async (t) => {

@@ -3,17 +3,12 @@
  */
 export const TINFOIL_CONFIG = {
   /**
-   * The base URL for the Tinfoil router API
-   */
-  INFERENCE_BASE_URL: "https://router.inf6.tinfoil.sh/v1/",
-
-  /**
-   * The URL for enclave key discovery and attestation endpoints
-   */
-  ENCLAVE_URL: "https://router.inf6.tinfoil.sh",
-
-  /**
    * The GitHub repository for code attestation verification
    */
   INFERENCE_PROXY_REPO: "tinfoilsh/confidential-model-router",
+
+  /**
+   * The ATC (Attestation and Trust Center) API URL for fetching available routers
+   */
+  ATC_API_URL: "https://atc.tinfoil.sh/routers",
 } as const;

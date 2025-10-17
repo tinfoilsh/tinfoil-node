@@ -7,7 +7,7 @@ const SKIP_MESSAGE = "Set RUN_TINFOIL_INTEGRATION=true to enable network integra
 console.log("- RUN_TINFOIL_INTEGRATION:", process.env.RUN_TINFOIL_INTEGRATION);
 
 describe("TinfoilAI - API integration", () => {
-  it("should verify enclave with confidential-inference-proxy repo", async (t) => {
+  it("should verify enclave with confidential-model-router repo", async (t) => {
     if (!RUN_INTEGRATION) {
       t.skip(SKIP_MESSAGE);
       return;

@@ -1,8 +1,6 @@
 import type { Transport as EhbpTransport } from "ehbp";
 import { Identity, Transport, PROTOCOL } from "ehbp";
 
-let transport: Promise<EhbpTransport> | null = null;
-
 // Public API
 export async function getHPKEKey(enclaveURL: string) : Promise<CryptoKey> {
   const url = new URL(enclaveURL);
@@ -62,48 +60,61 @@ export async function encryptedBodyRequest(
   hpkePublicKey?: string,
   init?: RequestInit,
   enclaveURL?: string,
+  transportInstance?: EhbpTransport,
 ): Promise<Response> {
   const { url: requestUrl, init: requestInit } = normalizeEncryptedBodyRequestArgs(
     input,
     init,
   );
 
-  const u = new URL(requestUrl);
-  const { origin } = u;
+  let actualTransport: EhbpTransport;
 
-  const keyOrigin = enclaveURL ? new URL(enclaveURL).origin : origin;
-
-  if(!transport) {
-    transport = getTransportForOrigin(origin, keyOrigin);
+  if (transportInstance) {
+    // Use provided transport instance
+    actualTransport = transportInstance;
+  } else {
+    // Create a new transport for this request
+    const u = new URL(requestUrl);
+    const { origin } = u;
+    const keyOrigin = enclaveURL ? new URL(enclaveURL).origin : origin;
+    actualTransport = await getTransportForOrigin(origin, keyOrigin);
   }
 
-  const transportInstance = await transport;
-
   if (hpkePublicKey) {
-    const transportKeyHash = await transportInstance.getServerPublicKeyHex();
+    const transportKeyHash = await actualTransport.getServerPublicKeyHex();
     if (transportKeyHash !== hpkePublicKey) {
-      transport = null;
       throw new Error(`HPKE public key mismatch. Expected: ${hpkePublicKey}, Got: ${transportKeyHash}`);
     }
   }
 
-  return transportInstance.request(requestUrl, requestInit);
+  return actualTransport.request(requestUrl, requestInit);
 }
 
 export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string, enclaveURL?: string): typeof fetch {
+  // Create a dedicated transport instance for this fetch function
+  let transportPromise: Promise<EhbpTransport> | null = null;
+
+  const getOrCreateTransport = async (): Promise<EhbpTransport> => {
+    if (!transportPromise) {
+      const baseUrl = new URL(baseURL);
+      const keyOrigin = enclaveURL ? new URL(enclaveURL).origin : baseUrl.origin;
+      transportPromise = getTransportForOrigin(baseUrl.origin, keyOrigin);
+    }
+    return transportPromise;
+  };
+
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
     const normalized = normalizeEncryptedBodyRequestArgs(input, init);
     const targetUrl = new URL(normalized.url, baseURL);
 
-    return encryptedBodyRequest(targetUrl.toString(), hpkePublicKey, normalized.init, enclaveURL);
+    // Get the dedicated transport instance for this fetch function
+    const transportInstance = await getOrCreateTransport();
+
+    return encryptedBodyRequest(targetUrl.toString(), hpkePublicKey, normalized.init, enclaveURL, transportInstance);
   }) as typeof fetch;
 }
 
-export function resetTransport(): void {
-  transport = null;
-}
-
-async function getTransportForOrigin(origin: string, keyOrigin: string): Promise<EhbpTransport> {
+export async function getTransportForOrigin(origin: string, keyOrigin: string): Promise<EhbpTransport> {
   if (typeof globalThis !== 'undefined') {
     const isSecure = (globalThis as any).isSecureContext !== false;
     const hasSubtle = !!(globalThis.crypto && (globalThis.crypto as Crypto).subtle);

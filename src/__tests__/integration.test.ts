@@ -280,5 +280,85 @@ describe("Examples Integration Tests", () => {
         "Streaming completion should produce content",
       );
     });
+
+    it("should initialize correctly when enclaveURL is provided but baseURL is not", async () => {
+      const { UnverifiedClient } = await import("../unverified-client");
+      
+      // Create a client with only enclaveURL, no baseURL
+      const client = new UnverifiedClient({
+        enclaveURL: "https://example-enclave.com"
+      });
+
+      // This should not throw an error
+      await client.ready();
+      
+      // Verify the client is properly initialized
+      assert.ok(client, "Client should be created");
+      assert.ok(client.fetch, "Client should have a fetch function");
+    });
+
+    it("SecureClient should initialize correctly when enclaveURL is provided but baseURL is not", async () => {
+      const { SecureClient } = await import("../secure-client");
+      
+      // Create a client with only enclaveURL, no baseURL
+      const client = new SecureClient({
+        enclaveURL: "https://example-enclave.com"
+      });
+
+      // This should not throw an error during initialization (before verification)
+      // Note: This will fail during verification since it's not a real enclave,
+      // but the baseURL initialization should work
+      try {
+        await client.ready();
+      } catch (error) {
+        // Expected to fail during verification, but not due to baseURL being undefined
+        assert.ok((error as Error).message.includes("verify") || (error as Error).message.includes("fetch"), 
+          "Should fail during verification, not baseURL initialization");
+      }
+      
+      // Verify the client is properly created
+      assert.ok(client, "Client should be created");
+      assert.ok(client.fetch, "Client should have a fetch function");
+    });
+
+    it("should initialize correctly when baseURL is provided but enclaveURL is not", async () => {
+      const { UnverifiedClient } = await import("../unverified-client");
+      
+      // Create a client with only baseURL, no enclaveURL
+      const client = new UnverifiedClient({
+        baseURL: "https://example-api.com/v1/"
+      });
+
+      // This should not throw an error and should not fetch a random router
+      await client.ready();
+      
+      // Verify the client is properly initialized
+      assert.ok(client, "Client should be created");
+      assert.ok(client.fetch, "Client should have a fetch function");
+    });
+
+    it("SecureClient should initialize correctly when baseURL is provided but enclaveURL is not", async () => {
+      const { SecureClient } = await import("../secure-client");
+      
+      // Create a client with only baseURL, no enclaveURL
+      const client = new SecureClient({
+        baseURL: "https://example-api.com/v1/"
+      });
+
+      // This should not throw an error during initialization (before verification)
+      // Note: This will fail during verification since it's not a real enclave,
+      // but the enclaveURL should be derived from baseURL without fetching a router
+      try {
+        await client.ready();
+      } catch (error) {
+        // Expected to fail during verification, but not due to enclaveURL being undefined
+        assert.ok((error as Error).message.includes("verify") || (error as Error).message.includes("fetch"), 
+          "Should fail during verification, not enclaveURL initialization");
+      }
+      
+      // Verify the client is properly created
+      assert.ok(client, "Client should be created");
+      assert.ok(client.fetch, "Client should have a fetch function");
+    });
   });
 });

@@ -60,7 +60,7 @@ describe("Verifier verify() failure when code attestation mismatches", () => {
           });
 
           const { Verifier } = await import("../verifier");
-          const verifier = new Verifier();
+          const verifier = new Verifier({ serverURL: "https://test-enclave.tinfoil.sh" });
 
           await assert.rejects(
             () => verifier.verify(),

@@ -72,8 +72,8 @@ export class TinfoilAI {
     }
 
     this.apiKey = openAIOptions.apiKey;
-    this.baseURL = options.baseURL || TINFOIL_CONFIG.INFERENCE_BASE_URL;
-    this.enclaveURL = options.enclaveURL || TINFOIL_CONFIG.ENCLAVE_URL;
+    this.baseURL = options.baseURL;
+    this.enclaveURL = options.enclaveURL;
     this.configRepo = options.configRepo || TINFOIL_CONFIG.INFERENCE_PROXY_REPO;
 
     this.secureClient = new SecureClient({
@@ -112,9 +112,12 @@ export class TinfoilAI {
       throw new Error("Verification document not available after successful verification");
     }
 
+    // Use the provided baseURL, or get it from SecureClient after initialization
+    const baseURL = this.baseURL || this.secureClient.getBaseURL();
+
     const clientOptions: ConstructorParameters<typeof OpenAI>[0] = {
       ...options,
-      baseURL: this.baseURL,
+      baseURL: baseURL,
       fetch: this.secureClient.fetch,
     };
 

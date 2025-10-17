@@ -8,6 +8,7 @@ export * from "./ai-sdk-provider";
 export * from "./config";
 export { SecureClient} from "./secure-client";
 export { UnverifiedClient } from "./unverified-client";
+export { fetchRouter } from "./router";
 
 // Re-export OpenAI utility types and classes that users might need
 // Using public exports from the main OpenAI package instead of deep imports
