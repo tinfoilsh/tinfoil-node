@@ -236,5 +236,16 @@ describe("encrypted-body-fetch", () => {
       );
       assert.strictEqual(typeof customFetch, "function");
     });
+
+    it("exposes Response constructor for OpenAI SDK FormData support detection", () => {
+      const customFetch = createEncryptedBodyFetch(
+        "https://api.example.com",
+        "mockkey123"
+      );
+
+      // The OpenAI SDK checks 'Response' in fetch to avoid making a test request to 'data:,'
+      assert.ok("Response" in customFetch, "fetch should have Response property");
+      assert.strictEqual(customFetch.Response, Response, "Response property should be the global Response constructor");
+    });
   });
 });

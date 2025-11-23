@@ -90,7 +90,10 @@ export async function encryptedBodyRequest(
   return actualTransport.request(requestUrl, requestInit);
 }
 
-export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string, enclaveURL?: string): typeof fetch {
+// Extended fetch type that includes Response property for OpenAI SDK compatibility
+type FetchWithResponse = typeof fetch & { Response: typeof Response };
+
+export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string, enclaveURL?: string): FetchWithResponse {
   // Create a dedicated transport instance for this fetch function
   let transportPromise: Promise<EhbpTransport> | null = null;
 
@@ -103,7 +106,7 @@ export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string
     return transportPromise;
   };
 
-  return (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const secureFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const normalized = normalizeEncryptedBodyRequestArgs(input, init);
     const targetUrl = new URL(normalized.url, baseURL);
 
@@ -111,7 +114,13 @@ export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string
     const transportInstance = await getOrCreateTransport();
 
     return encryptedBodyRequest(targetUrl.toString(), hpkePublicKey, normalized.init, enclaveURL, transportInstance);
-  }) as typeof fetch;
+  }) as FetchWithResponse;
+
+  // Expose Response constructor for OpenAI SDK's FormData support detection
+  // This prevents the SDK from making a test request to 'data:,' which would fail through EHBP
+  secureFetch.Response = Response;
+
+  return secureFetch;
 }
 
 export async function getTransportForOrigin(origin: string, keyOrigin: string): Promise<EhbpTransport> {
