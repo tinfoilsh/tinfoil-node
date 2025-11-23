@@ -40,7 +40,7 @@ describe("Client verification gating", () => {
         await assert.rejects(
           () =>
             client.chat.completions.create({
-              model: "llama-free",
+              model: "gpt-oss-120b-free",
               messages: [{ role: "user", content: "hi" }],
             } as any),
           /verify/,

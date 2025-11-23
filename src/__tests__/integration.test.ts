@@ -30,7 +30,7 @@ describe("Examples Integration Tests", () => {
       // Make a simple chat completion request
       const completion = await client.chat.completions.create({
         messages: [{ role: "user", content: "Hello!" }],
-        model: "llama-free",
+        model: "gpt-oss-120b-free",
       });
 
       // Verify the response structure
@@ -73,7 +73,7 @@ describe("Examples Integration Tests", () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-free",
+          model: "gpt-oss-120b-free",
           messages: [{ role: "user", content: "Hello!" }],
         }),
       });
@@ -122,7 +122,7 @@ describe("Examples Integration Tests", () => {
       // Make a simple chat completion request
       const completion = await client.chat.completions.create({
         messages: [{ role: "user", content: "Hello!" }],
-        model: "llama-free",
+        model: "gpt-oss-120b-free",
       });
 
       // Verify the response structure
@@ -165,7 +165,7 @@ describe("Examples Integration Tests", () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-free",
+          model: "gpt-oss-120b-free",
           messages: [{ role: "user", content: "Hello!" }],
         }),
       });
@@ -216,7 +216,7 @@ describe("Examples Integration Tests", () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "llama-free",
+          model: "gpt-oss-120b-free",
           messages: [{ role: "user", content: "Hello!" }],
         }),
       });
@@ -262,7 +262,7 @@ describe("Examples Integration Tests", () => {
           },
           { role: "user", content: "Is this a test?" },
         ],
-        model: "llama-free",
+        model: "gpt-oss-120b-free",
         stream: true,
       });
 

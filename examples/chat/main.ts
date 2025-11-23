@@ -6,7 +6,7 @@ async function main() {
 
     const completion = await client.chat.completions.create({
       messages: [{ role: "user", content: "Hello!" }],
-      model: "llama-free",
+      model: "gpt-oss-120b-free",
     });
 
     console.log(completion.choices[0]?.message?.content);

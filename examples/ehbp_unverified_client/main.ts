@@ -10,7 +10,7 @@ async function main() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-free",
+        model: "gpt-oss-120b-free",
         messages: [{ role: "user", content: "Hello!" }],
       }),
     });
