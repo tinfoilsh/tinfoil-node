@@ -81,7 +81,7 @@
     "@ai-sdk/openai-compatible": "^1.0.10",
     "ai": "^5.0.19",
     "dotenv": "^17.2.1",
-    "ehbp": "^0.0.5",
+    "ehbp": "^0.0.6",
     "openai": "^5.13.1",
     "ts-node": "^10.9.2"
   },
