@@ -1,0 +1,91 @@
+export interface Release {
+  tag_name: string;
+  body: string;
+}
+
+export interface AttestationResponse {
+  attestations: Array<{
+    bundle: unknown;
+  }>;
+}
+
+/**
+ * Gets the latest release and attestation digest of a repo.
+ *
+ * @param repo - The GitHub repository in format "owner/repo"
+ * @returns The digest string
+ * @throws Error if there's any error fetching or parsing the data
+ */
+export async function fetchLatestDigest(repo: string): Promise<string> {
+  const url = `https://api-github-proxy.tinfoil.sh/repos/${repo}/releases/latest`;
+  const releaseResponse = await fetch(url);
+
+  if (!releaseResponse.ok) {
+    throw new Error(`Failed to fetch release: ${releaseResponse.status} ${releaseResponse.statusText}`);
+  }
+
+  const responseData: Release = await releaseResponse.json();
+  const tagName = responseData.tag_name;
+  const body = responseData.body;
+
+  // Backwards compatibility for old EIF releases
+  const eifRegex = /EIF hash: ([a-fA-F0-9]{64})/;
+  const eifMatches = eifRegex.exec(body);
+  if (eifMatches) {
+    return eifMatches[1];
+  }
+
+  // Other format to fetch Digest
+  const digestRegex = /Digest: `([a-fA-F0-9]{64})`/;
+  const digestMatches = digestRegex.exec(body);
+  if (digestMatches) {
+    return digestMatches[1];
+  }
+
+  // Fallback option: fetch digest from github special endpoint
+  const digestUrl = `https://github-proxy.tinfoil.sh/${repo}/releases/download/${tagName}/tinfoil.hash`;
+  const response = await fetch(digestUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch attestation digest: ${response.status} ${response.statusText}`);
+  }
+
+  return (await response.text()).trim();
+}
+
+/**
+ * Fetches the sigstore bundle from a repo for a given repo and EIF hash.
+ * Uses a local filesystem cache to avoid repeated downloads.
+ *
+ * @param repo - The GitHub repository in format "owner/repo"
+ * @param digest - The EIF hash/digest
+ * @returns The sigstore bundle JSON object, encoded as bytes
+ * @throws Error if there's any error fetching or parsing the data, or reading/writing the cache
+ */
+export async function fetchAttestationBundle(repo: string, digest: string): Promise<unknown> {
+  const url = `https://api-github-proxy.tinfoil.sh/repos/${repo}/attestations/sha256:${digest}`;
+
+  let bundleResponse;
+  try {
+    bundleResponse = await fetch(url);
+    if (!bundleResponse.ok) {
+      throw new Error(`HTTP ${bundleResponse.status} ${bundleResponse.statusText}`);
+    }
+  } catch (e) {
+    throw new Error(`Error fetching attestation from ${url}: ${e}`);
+  }
+
+  let responseData: AttestationResponse;
+  try {
+    responseData = await bundleResponse.json();
+  } catch (e) {
+    throw new Error(`Error decoding JSON response from ${url}: ${e}`);
+  }
+
+  try {
+    const bundleObject = responseData.attestations[0].bundle;
+    return bundleObject;
+  } catch (e) {
+    throw new Error(`Invalid attestation response format from ${url}: ${e}. Response: ${JSON.stringify(responseData)}`);
+  }
+}
