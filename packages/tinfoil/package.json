@@ -1,0 +1,96 @@
+{
+  "name": "tinfoil",
+  "version": "0.10.11",
+  "description": "Tinfoil secure OpenAI client wrapper",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.mjs",
+  "types": "dist/index.d.ts",
+  "browser": {
+    "./dist/index.js": "./dist/esm/index.browser.mjs",
+    "./dist/esm/index.mjs": "./dist/esm/index.browser.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/esm/index.browser.mjs",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/esm/client.mjs",
+      "require": "./dist/client.js"
+    },
+    "./ai-sdk-provider": {
+      "types": "./dist/ai-sdk-provider.d.ts",
+      "import": "./dist/esm/ai-sdk-provider.mjs",
+      "require": "./dist/ai-sdk-provider.js"
+    },
+    "./verifier": {
+      "types": "./dist/verifier.d.ts",
+      "import": "./dist/esm/verifier.mjs",
+      "require": "./dist/verifier.js"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/esm/config.mjs",
+      "require": "./dist/config.js"
+    },
+    "./secure-client": {
+      "types": "./dist/secure-client.d.ts",
+      "import": "./dist/esm/secure-client.mjs",
+      "require": "./dist/secure-client.js"
+    },
+    "./secure-fetch": {
+      "types": "./dist/secure-fetch.d.ts",
+      "browser": "./dist/esm/secure-fetch.browser.mjs",
+      "import": "./dist/esm/secure-fetch.mjs",
+      "require": "./dist/secure-fetch.js"
+    }
+  },
+  "scripts": {
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc && cp src/wasm-exec.js dist/",
+    "build:esm": "tsc -p tsconfig.esm.json && node scripts/convert-to-mjs.js && cp src/wasm-exec.js dist/esm/",
+    "test": "bash -lc 'rm -rf dist .node-tests && npm run build:cjs && tsc -p tsconfig.node-test.json && cp src/wasm-exec.js .node-tests/ && cp -r src/__tests__/fixtures .node-tests/__tests__/ && node --test $(find .node-tests -name \"*.test.js\" -print)'",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist .node-tests",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinfoilsh/tinfoil-node.git"
+  },
+  "keywords": [
+    "openai",
+    "security",
+    "AI",
+    "tinfoil"
+  ],
+  "author": "Tinfoil",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^1.0.10",
+    "ai": "^5.0.19",
+    "dotenv": "^17.2.1",
+    "ehbp": "^0.0.6",
+    "openai": "^5.13.1",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "eslint": "^8.57.0",
+    "jsdom": "^25.0.0"
+  }
+}
