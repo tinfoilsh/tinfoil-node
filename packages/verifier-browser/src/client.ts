@@ -1,47 +1,30 @@
 import { verifyAttestation as verifyAmdAttestation, fetchAttestation } from './attestation.js';
 import { fetchLatestDigest, fetchAttestationBundle } from './github.js';
 import { verifyAttestation as verifySigstoreAttestation } from './sigstore.js';
-import { AttestationDocument, AttestationMeasurement, VerificationDocument, VerificationStepState, compareMeasurements, FormatMismatchError, MeasurementMismatchError, measurementFingerprint } from './types.js';
+import { AttestationDocument, AttestationMeasurement, AttestationResponse, VerificationDocument, compareMeasurements, FormatMismatchError, MeasurementMismatchError, measurementFingerprint } from './types.js';
 import { getRouterAddress } from './router.js';
 
-export interface VerificationResult {
-  publicKeyFingerprint: string;
-  hpkePublicKey?: string;
-  digest: string;
-  measurement: AttestationMeasurement;
+const DEFAULT_CONFIG_REPO = 'tinfoilsh/confidential-model-router';
+
+export interface VerifierOptions {
+  serverURL: string;
+  configRepo?: string;
 }
 
-export interface ClientOptions {
-  enclave?: string;
-  repo?: string;
-  measurement?: { snp_measurement: string };
-}
-
-export class SecureClient {
+export class Verifier {
   private enclave: string;
-  private repo: string;
-  private measurement?: { snp_measurement: string };
-  private verificationResult?: VerificationResult;
+  private configRepo: string;
   private verificationDocument?: VerificationDocument;
 
-  constructor(options: ClientOptions = {}) {
-    // Measurement takes precedence over repo
-    if (options.measurement) {
-      this.repo = '';
-    } else {
-      this.repo = options.repo || 'tinfoilsh/confidential-model-router';
+  constructor(options: VerifierOptions) {
+    if (!options.serverURL) {
+      throw new Error("serverURL is required for Verifier");
     }
-
-    // Ensure at least one verification method
-    if (!options.measurement && !this.repo) {
-      throw new Error('Must provide either measurement or repo parameter for verification.');
-    }
-
-    this.enclave = options.enclave || '';
-    this.measurement = options.measurement;
+    this.enclave = new URL(options.serverURL).hostname;
+    this.configRepo = options.configRepo || DEFAULT_CONFIG_REPO;
   }
 
-  async verify(): Promise<VerificationResult> {
+  async verify(): Promise<AttestationResponse> {
     const steps: VerificationDocument['steps'] = {
       fetchDigest: { status: 'pending' },
       verifyCode: { status: 'pending' },
@@ -56,7 +39,7 @@ export class SecureClient {
 
       // Step 1: Verify Enclave
       let attestationDoc: AttestationDocument;
-      let amdVerification;
+      let amdVerification: AttestationResponse;
       try {
         attestationDoc = await fetchAttestation(this.enclave);
         amdVerification = await verifyAmdAttestation(attestationDoc);
@@ -67,81 +50,48 @@ export class SecureClient {
         throw error;
       }
 
-      let digest = 'pinned_no_digest';
-      let codeMeasurements: AttestationMeasurement;
-
-      if (this.measurement) {
-        // Pinned measurement mode
+      // Step 2: Fetch Digest
+      let digest: string;
+      try {
+        digest = await fetchLatestDigest(this.configRepo);
         steps.fetchDigest = { status: 'success' };
+      } catch (error) {
+        steps.fetchDigest = { status: 'failed', error: (error as Error).message };
+        this.saveFailedVerificationDocument(steps);
+        throw error;
+      }
+
+      // Step 3: Verify Code
+      let codeMeasurements: AttestationMeasurement;
+      try {
+        const sigstoreBundle = await fetchAttestationBundle(this.configRepo, digest);
+        codeMeasurements = await verifySigstoreAttestation(sigstoreBundle, digest, this.configRepo);
         steps.verifyCode = { status: 'success' };
+      } catch (error) {
+        steps.verifyCode = { status: 'failed', error: (error as Error).message };
+        this.saveFailedVerificationDocument(steps);
+        throw error;
+      }
 
-        const expectedSnpMeasurement = this.measurement.snp_measurement;
-        if (!expectedSnpMeasurement) {
-          const error = new FormatMismatchError('snp_measurement not found in provided measurement');
-          steps.compareMeasurements = { status: 'failed', error: error.message };
-          this.saveFailedVerificationDocument(steps);
-          throw error;
-        }
-
-        const actualMeasurement = amdVerification.measurement.registers[0];
-
-        if (actualMeasurement !== expectedSnpMeasurement) {
-          const error = new MeasurementMismatchError(
-            `SNP measurement mismatch: expected ${expectedSnpMeasurement}, got ${actualMeasurement}`
-          );
-          steps.compareMeasurements = { status: 'failed', error: error.message };
-          this.saveFailedVerificationDocument(steps);
-          throw error;
-        }
-
+      // Step 4: Compare Measurements
+      try {
+        compareMeasurements(codeMeasurements, amdVerification.measurement);
         steps.compareMeasurements = { status: 'success' };
-
-        codeMeasurements = {
-          type: amdVerification.measurement.type,
-          registers: [expectedSnpMeasurement]
-        };
-      } else {
-        // Step 2: Fetch Digest
-        try {
-          digest = await fetchLatestDigest(this.repo);
-          steps.fetchDigest = { status: 'success' };
-        } catch (error) {
-          steps.fetchDigest = { status: 'failed', error: (error as Error).message };
-          this.saveFailedVerificationDocument(steps);
-          throw error;
+      } catch (error) {
+        if (error instanceof FormatMismatchError) {
+          steps.compareMeasurements = { status: 'failed', error: error.message };
+        } else if (error instanceof MeasurementMismatchError) {
+          steps.compareMeasurements = { status: 'failed', error: error.message };
+        } else {
+          steps.compareMeasurements = { status: 'failed', error: (error as Error).message };
         }
-
-        // Step 3: Verify Code
-        try {
-          const sigstoreBundle = await fetchAttestationBundle(this.repo, digest);
-          codeMeasurements = await verifySigstoreAttestation(sigstoreBundle, digest, this.repo);
-          steps.verifyCode = { status: 'success' };
-        } catch (error) {
-          steps.verifyCode = { status: 'failed', error: (error as Error).message };
-          this.saveFailedVerificationDocument(steps);
-          throw error;
-        }
-
-        // Step 4: Compare Measurements
-        try {
-          compareMeasurements(codeMeasurements, amdVerification.measurement);
-          steps.compareMeasurements = { status: 'success' };
-        } catch (error) {
-          if (error instanceof FormatMismatchError) {
-            steps.compareMeasurements = { status: 'failed', error: error.message };
-          } else if (error instanceof MeasurementMismatchError) {
-            steps.compareMeasurements = { status: 'failed', error: error.message };
-          } else {
-            steps.compareMeasurements = { status: 'failed', error: (error as Error).message };
-          }
-          this.saveFailedVerificationDocument(steps);
-          throw error;
-        }
+        this.saveFailedVerificationDocument(steps);
+        throw error;
       }
 
       // Build successful verification document
       this.verificationDocument = {
-        configRepo: this.repo || 'pinned_no_repo',
+        configRepo: this.configRepo,
         enclaveHost: this.enclave,
         releaseDigest: digest,
         codeMeasurement: codeMeasurements,
@@ -155,16 +105,8 @@ export class SecureClient {
         steps
       };
 
-      this.verificationResult = {
-        publicKeyFingerprint: amdVerification.tlsPublicKeyFingerprint || '',
-        hpkePublicKey: amdVerification.hpkePublicKey,
-        digest,
-        measurement: amdVerification.measurement,
-      };
-
-      return this.verificationResult;
+      return amdVerification;
     } catch (error) {
-      // If we didn't already save a failed document, do it now
       if (!this.verificationDocument) {
         this.saveFailedVerificationDocument(steps);
       }
@@ -174,7 +116,7 @@ export class SecureClient {
 
   private saveFailedVerificationDocument(steps: VerificationDocument['steps']): void {
     this.verificationDocument = {
-      configRepo: this.repo || 'pinned_no_repo',
+      configRepo: this.configRepo,
       enclaveHost: this.enclave || '',
       releaseDigest: '',
       codeMeasurement: { type: '', registers: [] },
@@ -189,16 +131,7 @@ export class SecureClient {
     };
   }
 
-  getVerificationResult(): VerificationResult | undefined {
-    return this.verificationResult;
-  }
-
   getVerificationDocument(): VerificationDocument | undefined {
     return this.verificationDocument;
   }
-}
-
-export async function verifyEnclave(options: ClientOptions): Promise<VerificationResult> {
-  const client = new SecureClient(options);
-  return await client.verify();
 }
