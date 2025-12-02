@@ -1,5 +1,5 @@
 {
-  "name": "@tinfoilsh/verifier-js",
+  "name": "@tinfoil/verifier-browser",
   "version": "0.1.0",
   "description": "Browser-compatible AMD SEV-SNP attestation verifier",
   "type": "module",
@@ -25,11 +25,12 @@
     "verifier",
     "browser"
   ],
-  "author": "",
-  "license": "MIT",
+  "author": "Tinfoil",
+  "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@types/node": "^24.0.14",
     "typescript": "^5.8.3",
+    "vite": "^6.0.0",
     "vitest": "^3.2.4"
   },
   "files": [
