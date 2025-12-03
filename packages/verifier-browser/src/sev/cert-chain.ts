@@ -179,20 +179,17 @@ export class CertificateChain {
     }
 
     // Validate AMD location for issuer and subject
-    const issuerName = this.parseDistinguishedName(this.ark.issuer);
-    const subjectName = this.parseDistinguishedName(this.ark.subject);
-
-    if (!this.validateAmdLocation(issuerName)) {
+    if (!this.validateAmdLocation(this.ark.issuerDN)) {
       throw new Error('ARK certificate issuer is not a valid AMD location');
     }
-    if (!this.validateAmdLocation(subjectName)) {
+    if (!this.validateAmdLocation(this.ark.subjectDN)) {
       throw new Error('ARK certificate subject is not a valid AMD location');
     }
 
     // Check common name
-    const cn = subjectName.get('CN');
-    if (cn !== 'SEV-Genoa') {
-      throw new Error(`ARK certificate subject common name is not SEV-Genoa but ${cn}`);
+    const cn = this.ark.subjectDN.get('CN');
+    if (cn !== 'ARK-Genoa') {
+      throw new Error(`ARK certificate subject common name is not ARK-Genoa but ${cn}`);
     }
   }
 
@@ -203,18 +200,15 @@ export class CertificateChain {
     }
 
     // Validate AMD location
-    const issuerName = this.parseDistinguishedName(this.ask.issuer);
-    const subjectName = this.parseDistinguishedName(this.ask.subject);
-
-    if (!this.validateAmdLocation(issuerName)) {
+    if (!this.validateAmdLocation(this.ask.issuerDN)) {
       throw new Error('ASK certificate issuer is not a valid AMD location');
     }
-    if (!this.validateAmdLocation(subjectName)) {
+    if (!this.validateAmdLocation(this.ask.subjectDN)) {
       throw new Error('ASK certificate subject is not a valid AMD location');
     }
 
-    // Check common name is exactly "SEV-Genoa"
-    const cn = subjectName.get('CN');
+    // Check common name is exactly "SEV-Genoa" (ASK cert uses SEV-Genoa)
+    const cn = this.ask.subjectDN.get('CN');
     if (cn !== 'SEV-Genoa') {
       throw new Error(`ASK certificate subject common name is not SEV-Genoa but ${cn}`);
     }
@@ -227,18 +221,15 @@ export class CertificateChain {
     }
 
     // Validate AMD location
-    const issuerName = this.parseDistinguishedName(this.vcek.issuer);
-    const subjectName = this.parseDistinguishedName(this.vcek.subject);
-
-    if (!this.validateAmdLocation(issuerName)) {
+    if (!this.validateAmdLocation(this.vcek.issuerDN)) {
       throw new Error('VCEK certificate issuer is not a valid AMD location');
     }
-    if (!this.validateAmdLocation(subjectName)) {
+    if (!this.validateAmdLocation(this.vcek.subjectDN)) {
       throw new Error('VCEK certificate subject is not a valid AMD location');
     }
 
     // Validate common name
-    const cn = subjectName.get('CN');
+    const cn = this.vcek.subjectDN.get('CN');
     if (cn !== 'SEV-VCEK') {
       throw new Error(`VCEK certificate subject common name is not SEV-VCEK but ${cn}`);
     }
@@ -296,37 +287,6 @@ export class CertificateChain {
       org === 'Advanced Micro Devices' &&
       orgUnit === 'Engineering'
     );
-  }
-
-  private parseDistinguishedName(derBytes: Uint8Array): Map<string, string> {
-    const result = new Map<string, string>();
-    const asn1 = ASN1Obj.parseBuffer(derBytes);
-
-    // Distinguished name is a SEQUENCE of SETs of SEQUENCE (AttributeTypeAndValue)
-    for (const rdn of asn1.subs) {
-      for (const atv of rdn.subs) {
-        const oid = atv.subs[0].toOID();
-        const value = new TextDecoder().decode(atv.subs[1].value);
-        const attrName = this.oidToAttributeName(oid);
-        if (attrName) {
-          result.set(attrName, value);
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private oidToAttributeName(oid: string): string | null {
-    const oidMap: { [key: string]: string } = {
-      '2.5.4.3': 'CN',   // Common Name
-      '2.5.4.6': 'C',    // Country
-      '2.5.4.7': 'L',    // Locality
-      '2.5.4.8': 'ST',   // State or Province
-      '2.5.4.10': 'O',   // Organization
-      '2.5.4.11': 'OU',  // Organizational Unit
-    };
-    return oidMap[oid] || null;
   }
 
   private getSignatureAlgorithmOid(cert: X509Certificate): string {
