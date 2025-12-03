@@ -1,4 +1,4 @@
-import { TINFOIL_CONFIG } from "./config";
+import { TINFOIL_CONFIG } from "./config.js";
 
 /**
  * Router utilities for fetching available Tinfoil routers

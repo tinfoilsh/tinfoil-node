@@ -35,7 +35,7 @@ const verifyMock = vi.fn(async () => ({
 const mockFetch = vi.fn(async () => new Response(null));
 const createSecureFetchMock = vi.fn(() => mockFetch);
 
-vi.mock("../verifier", () => ({
+vi.mock("../verifier.js", () => ({
   Verifier: class {
     verify() {
       return verifyMock();
@@ -46,7 +46,7 @@ vi.mock("../verifier", () => ({
   },
 }));
 
-vi.mock("tinfoil/secure-fetch", () => ({
+vi.mock("../secure-fetch.js", () => ({
   createSecureFetch: createSecureFetchMock,
 }));
 

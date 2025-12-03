@@ -1,14 +1,14 @@
 // Re-export the TinfoilAI class
-export { TinfoilAI } from "./tinfoilai";
-export { TinfoilAI as default } from "./tinfoilai";
+export { TinfoilAI } from "./tinfoilai.js";
+export { TinfoilAI as default } from "./tinfoilai.js";
 
 // Export verifier
-export * from "./verifier";
-export * from "./ai-sdk-provider";
-export * from "./config";
-export { SecureClient} from "./secure-client";
-export { UnverifiedClient } from "./unverified-client";
-export { fetchRouter } from "./router";
+export * from "./verifier.js";
+export * from "./ai-sdk-provider.js";
+export * from "./config.js";
+export { SecureClient} from "./secure-client.js";
+export { UnverifiedClient } from "./unverified-client.js";
+export { fetchRouter } from "./router.js";
 
 // Re-export OpenAI utility types and classes that users might need
 // Using public exports from the main OpenAI package instead of deep imports

@@ -3,18 +3,18 @@
   "version": "0.1.0",
   "description": "AMD SEV-SNP attestation verifier for Node.js and browsers",
   "type": "module",
-  "main": "dist/esm/index.js",
-  "browser": "dist/browser/verifier.min.js",
-  "types": "dist/esm/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "browser": "./dist/browser/verifier.min.js",
-      "default": "./dist/esm/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc && vite build",
+    "build": "tsc",
     "test": "vitest run",
     "test:browser": "vitest run --config vite.config.playwright.ts",
     "test:integration": "vitest run --config vite.config.integration.ts",
@@ -32,7 +32,6 @@
     "@types/node": "^24.0.14",
     "@vitest/browser": "^3.2.4",
     "playwright": "^1.49.1",
-    "typescript": "^5.8.3",
     "vite": "^6.0.0",
     "vitest": "^3.2.4"
   },

@@ -1,6 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { TINFOIL_CONFIG } from "./config";
-import { SecureClient } from "./secure-client";
+import { TINFOIL_CONFIG } from "./config.js";
+import { SecureClient } from "./secure-client.js";
 
 interface CreateTinfoilAIOptions {
   baseURL?: string;

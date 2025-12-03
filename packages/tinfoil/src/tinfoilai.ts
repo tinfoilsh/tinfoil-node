@@ -11,10 +11,10 @@ import type {
   Moderations,
   Responses,
 } from "openai/resources";
-import { SecureClient } from "./secure-client";
-import type { VerificationDocument } from "./verifier";
-import { TINFOIL_CONFIG } from "./config";
-import { isRealBrowser } from "./env";
+import { SecureClient } from "./secure-client.js";
+import type { VerificationDocument } from "./verifier.js";
+import { TINFOIL_CONFIG } from "./config.js";
+import { isRealBrowser } from "./env.js";
 
 function createAsyncProxy<T extends object>(promise: Promise<T>): T {
   return new Proxy({} as T, {

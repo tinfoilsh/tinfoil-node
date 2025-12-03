@@ -1,4 +1,4 @@
-import { createEncryptedBodyFetch } from "./encrypted-body-fetch";
+import { createEncryptedBodyFetch } from "./encrypted-body-fetch.js";
 
 export function createSecureFetch(baseURL: string, enclaveURL?: string, hpkePublicKey?: string, tlsPublicKeyFingerprint?: string): typeof fetch {
     if (hpkePublicKey) {
