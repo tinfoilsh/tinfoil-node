@@ -1,4 +1,4 @@
-import type { SignerInfo, SnpPlatformInfo, SnpPolicy } from './types.js';
+import type { SignerInfo, TCBParts, SnpPlatformInfo, SnpPolicy } from './types.js';
 import {
   POLICY_RESERVED_1_BIT,
   REPORT_SIZE,

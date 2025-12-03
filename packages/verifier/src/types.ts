@@ -71,6 +71,23 @@ export function compareMeasurements(a: AttestationMeasurement, b: AttestationMea
   }
 }
 
+/**
+ * Computes the fingerprint of a measurement.
+ * If there is only one register, returns that register directly.
+ * Otherwise, returns SHA-256 hash of type + all registers concatenated.
+ */
+export async function measurementFingerprint(m: AttestationMeasurement): Promise<string> {
+  if (m.registers.length === 1) {
+    return m.registers[0];
+  }
+
+  const allData = m.type + m.registers.join('');
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(allData));
+  const hashArray = new Uint8Array(hashBuffer);
+  return Array.from(hashArray).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export interface VerificationStepState {
   status: 'pending' | 'success' | 'failed';
   error?: string;
@@ -105,3 +122,4 @@ export interface VerificationDocument {
     otherError?: VerificationStepState;
   };
 }
+

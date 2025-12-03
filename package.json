@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @tinfoil/verifier-core && npm run build -w @tinfoil/verifier-browser && npm run build -w @tinfoil/verifier-node && npm run build -w tinfoil",
+    "build": "npm run build -w @tinfoilsh/verifier && npm run build -w tinfoil",
     "test": "npm run test -ws --if-present",
     "test:integration": "npm run test:integration -ws --if-present",
     "test:browser": "npm run test:browser -ws --if-present",
@@ -14,8 +14,5 @@
   },
   "devDependencies": {
     "typescript": "^5.9.2"
-  },
-  "dependencies": {
-    "@freedomofpress/sigstore-browser": "^0.1.9"
   }
 }

@@ -3,7 +3,7 @@ export interface Release {
   body: string;
 }
 
-export interface AttestationBundleResponse {
+export interface AttestationResponse {
   attestations: Array<{
     bundle: unknown;
   }>;
@@ -24,7 +24,7 @@ export async function fetchLatestDigest(repo: string): Promise<string> {
     throw new Error(`Failed to fetch release: ${releaseResponse.status} ${releaseResponse.statusText}`);
   }
 
-  const responseData = await releaseResponse.json() as Release;
+  const responseData: Release = await releaseResponse.json();
   const tagName = responseData.tag_name;
   const body = responseData.body;
 
@@ -75,9 +75,9 @@ export async function fetchAttestationBundle(repo: string, digest: string): Prom
     throw new Error(`Error fetching attestation from ${url}: ${e}`);
   }
 
-  let responseData: AttestationBundleResponse;
+  let responseData: AttestationResponse;
   try {
-    responseData = await bundleResponse.json() as AttestationBundleResponse;
+    responseData = await bundleResponse.json();
   } catch (e) {
     throw new Error(`Error decoding JSON response from ${url}: ${e}`);
   }

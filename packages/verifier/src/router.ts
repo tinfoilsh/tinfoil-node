@@ -6,7 +6,7 @@ export async function getRouterAddress(): Promise<string> {
     throw new Error(`Failed to fetch routers: ${response.status} ${response.statusText}`);
   }
 
-  const routers = await response.json() as string[];
+  const routers: string[] = await response.json();
 
   if (routers.length === 0) {
     throw new Error('No routers found in the response');

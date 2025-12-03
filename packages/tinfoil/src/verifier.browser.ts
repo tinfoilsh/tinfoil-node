@@ -1,5 +1,5 @@
-export * from '@tinfoil/verifier-browser';
+export * from '@tinfoilsh/verifier';
 
 export function suppressWasmLogs(_suppress = true): void {
-  // No-op in browser - there is no WASM
+  // No-op - WASM is no longer used
 }
