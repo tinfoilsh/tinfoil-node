@@ -42,14 +42,25 @@ export class MeasurementMismatchError extends AttestationError {
 }
 
 /**
+ * Check if a predicate type is SNP-compatible (contains SNP measurements)
+ */
+function isSnpCompatible(type: string): boolean {
+  return type === PredicateType.SevGuestV1 ||
+         type === PredicateType.SevGuestV2 ||
+         type === PredicateType.SnpTdxMultiplatformV1;
+}
+
+/**
  * Compares two measurements for equality.
- * @throws FormatMismatchError if the measurement types don't match
+ * @throws FormatMismatchError if the measurement types are incompatible
  * @throws MeasurementMismatchError if the registers don't match
  */
 export function compareMeasurements(a: AttestationMeasurement, b: AttestationMeasurement): void {
-  if (a.type !== b.type) {
+  // Allow comparison between compatible SNP types
+  const typesCompatible = a.type === b.type || (isSnpCompatible(a.type) && isSnpCompatible(b.type));
+  if (!typesCompatible) {
     throw new FormatMismatchError(
-      `Measurement types do not match: '${a.type}' vs '${b.type}'`
+      `Measurement types are incompatible: '${a.type}' vs '${b.type}'`
     );
   }
   if (a.registers.length !== b.registers.length ||
