@@ -4,14 +4,14 @@ import { resolve } from "path";
 
 export default defineConfig({
   build: {
-    outDir: "dist",
+    outDir: "dist/browser",
     target: "esnext",
     minify: "esbuild",
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "TinfoilVerifier",
-      formats: ["es", "iife"],
-      fileName: (format) => format === "iife" ? "verifier.min.js" : "index.js",
+      formats: ["iife"],
+      fileName: () => "verifier.min.js",
     },
     rollupOptions: {
       output: {
