@@ -1,28 +1,25 @@
-import { PredicateType, AttestationMeasurement, AttestationError } from './types.js';
+import { PredicateType, AttestationMeasurement } from './types.js';
+import type { X509Certificate, VerificationPolicy } from '@freedomofpress/sigstore-browser';
 
-const OIDC_ISSUER = 'https://token.actions.githubusercontent.com';
+class GitHubWorkflowRefPattern implements VerificationPolicy {
+  private pattern: RegExp;
 
-// Fulcio OID for GitHub Workflow Ref (refs/heads/main, refs/tags/v1.0.0, etc.)
-// See: https://github.com/sigstore/fulcio/blob/main/docs/oid-info.md
-const EXTENSION_OID_GITHUB_WORKFLOW_REF = '1.3.6.1.4.1.57264.1.6';
+  constructor(pattern: string | RegExp) {
+    this.pattern = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+  }
 
-export interface GitHubWorkflowRefPatternPolicy {
-  type: 'GitHubWorkflowRefPattern';
-  pattern: string;
+  verify(cert: X509Certificate): void {
+    const ext = cert.extGitHubWorkflowRef;
+    if (!ext) {
+      throw new Error('Certificate does not contain GitHubWorkflowRef extension');
+    }
+    if (!this.pattern.test(ext.workflowRef)) {
+      throw new Error(
+        `Certificate's GitHubWorkflowRef "${ext.workflowRef}" does not match pattern "${this.pattern}"`
+      );
+    }
+  }
 }
-
-export interface OIDCIssuerPolicy {
-  type: 'OIDCIssuer';
-  issuer: string;
-}
-
-export interface GitHubWorkflowRepositoryPolicy {
-  type: 'GitHubWorkflowRepository';
-  repository: string;
-}
-
-export type Policy = GitHubWorkflowRefPatternPolicy | OIDCIssuerPolicy | GitHubWorkflowRepositoryPolicy;
-
 
 /**
  * Verifies the attested measurements of an enclave image against a trusted root (Sigstore)
@@ -41,80 +38,31 @@ export async function verifyAttestation(
 ): Promise<AttestationMeasurement> {
 
   try {
-    // Create verifier with the trusted root
-    const { SigstoreVerifier } = await import('@freedomofpress/sigstore-browser');
+    const {
+      SigstoreVerifier,
+      GITHUB_OIDC_ISSUER,
+      AllOf,
+      OIDCIssuer,
+      GitHubWorkflowRepository,
+    } = await import('@freedomofpress/sigstore-browser');
 
     const verifier = new SigstoreVerifier();
     await verifier.loadSigstoreRootWithTUF();
 
-    // Parse the bundle
     const bundle = bundleJson as any;
 
-    // Create verification policy for GitHub Actions certificate identity
-    const identity = `https://github.com/${repo}/.github/workflows/`;
+    // Create policy for GitHub Actions certificate identity
+    const policy = new AllOf([
+      new OIDCIssuer(GITHUB_OIDC_ISSUER),
+      new GitHubWorkflowRepository(repo),
+      new GitHubWorkflowRefPattern(/^refs\/tags\//),
+    ]);
 
-    const digestBytes = Uint8Array.from(digest.match(/.{2}/g)!.map(byte => parseInt(byte, 16)));
+    // Verify the DSSE envelope and get the payload
+    const { payloadType, payload: payloadBytes } = await verifier.verifyDsse(bundle, policy);
 
-    /**
-     * Core DSSE Verification
-     *
-     * This verifies the signature on the DSSE envelope, applies the
-     * certificate identity policy, and checks Rekor log consistency.
-     * It returns the verified payload from within the envelope.
-     */
-    await verifier.verifyArtifact(
-      identity,
-      OIDC_ISSUER,
-      bundle,
-      digestBytes,
-      true
-    );
-
-    /**
-     * Verify GitHub Workflow Ref Pattern
-     *
-     * Ensures attestations only come from tagged releases (refs/tags/.*).
-     * This matches the Python implementation's GitHubWorkflowRefPattern policy.
-     */
-    const { X509Certificate } = await import('@freedomofpress/sigstore-browser');
-
-    const certData = bundle.verificationMaterial?.certificate?.rawBytes ||
-      bundle.verificationMaterial?.x509CertificateChain?.certificates?.[0]?.rawBytes;
-
-    if (!certData) {
-      throw new AttestationError('No certificate found in bundle');
-    }
-
-    const { base64ToUint8Array, Uint8ArrayToString } = await import('@freedomofpress/crypto-browser');
-    const signingCert = X509Certificate.parse(base64ToUint8Array(certData));
-
-    const workflowRefExt = signingCert.extension(EXTENSION_OID_GITHUB_WORKFLOW_REF);
-    if (!workflowRefExt) {
-      throw new AttestationError(
-        `Certificate does not contain GitHubWorkflowRef (${EXTENSION_OID_GITHUB_WORKFLOW_REF}) extension`
-      );
-    }
-
-    const workflowRef = Uint8ArrayToString(workflowRefExt.value);
-    const tagPattern = /^refs\/tags\/.+$/;
-    if (!tagPattern.test(workflowRef)) {
-      throw new AttestationError(
-        `Certificate's GitHubWorkflowRef does not match required pattern ` +
-        `(got '${workflowRef}', expected pattern 'refs/tags/.*')`
-      );
-    }
-
-    /**
-     * Process the Verified Payload
-     */
-    if (!bundle.dsseEnvelope) {
-      throw new Error('Bundle does not contain a DSSE envelope');
-    }
-
-    const payloadBytes = Uint8Array.from(atob(bundle.dsseEnvelope.payload), c => c.charCodeAt(0));
     const payload = JSON.parse(new TextDecoder().decode(payloadBytes));
 
-    const payloadType = bundle.dsseEnvelope.payloadType;
     if (payloadType !== 'application/vnd.in-toto+json') {
       throw new Error(`Unsupported payload type: ${payloadType}. Only supports In-toto.`);
     }
