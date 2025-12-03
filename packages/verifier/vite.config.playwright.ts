@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   test: {
     include: ["**/*.browser.test.ts"],
-    exclude: ["**/integration.browser.test.ts", "**/node_modules/**"],
+    exclude: ["**/*.browser.integration.test.ts", "**/node_modules/**"],
     browser: {
       enabled: true,
       provider: "playwright",

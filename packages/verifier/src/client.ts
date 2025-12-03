@@ -1,7 +1,8 @@
 import { verifyAttestation as verifyAmdAttestation, fetchAttestation } from './attestation.js';
 import { fetchLatestDigest, fetchAttestationBundle } from './github.js';
 import { verifyAttestation as verifySigstoreAttestation } from './sigstore.js';
-import { AttestationDocument, AttestationMeasurement, AttestationResponse, VerificationDocument, compareMeasurements, FormatMismatchError, MeasurementMismatchError, measurementFingerprint } from './types.js';
+import { compareMeasurements, FormatMismatchError, MeasurementMismatchError, measurementFingerprint } from './types.js';
+import type { AttestationDocument, AttestationMeasurement, AttestationResponse, VerificationDocument } from './types.js';
 import { getRouterAddress } from './router.js';
 
 const DEFAULT_CONFIG_REPO = 'tinfoilsh/confidential-model-router';

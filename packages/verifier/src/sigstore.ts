@@ -1,4 +1,5 @@
-import { PredicateType, AttestationMeasurement } from './types.js';
+import { PredicateType } from './types.js';
+import type { AttestationMeasurement } from './types.js';
 import type { X509Certificate, VerificationPolicy } from '@freedomofpress/sigstore-browser';
 
 class GitHubWorkflowRefPattern implements VerificationPolicy {

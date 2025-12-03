@@ -17,8 +17,8 @@
     "build": "tsc",
     "test": "vitest run",
     "test:browser": "vitest run --config vite.config.playwright.ts",
-    "test:integration": "vitest run --config vite.config.integration.ts",
-    "test:browser:integration": "vitest run --config vite.config.integration.ts"
+    "test:browser:integration": "vitest run --config vite.config.integration.ts",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "attestation",
