@@ -60,18 +60,15 @@ async function verifyReportSignature(
   rawSignature.set(rRaw, 0);
   rawSignature.set(sRaw, 48);
 
-  // Get the signed data buffer - need to slice properly since signedData may be a view
-  const signedDataBuffer = report.signedData.buffer.slice(
-    report.signedData.byteOffset,
-    report.signedData.byteOffset + report.signedData.byteLength
-  );
+  // Get the signed data - slice to ensure we have the correct view
+  const signedData = report.signedData.slice();
 
   try {
     const isValid = await crypto.subtle.verify(
       { name: KeyTypes.Ecdsa, hash: HashAlgorithms.SHA384 },
       vcekPublicKey,
-      rawSignature.buffer,
-      signedDataBuffer
+      rawSignature,
+      signedData
     );
 
     return isValid;
