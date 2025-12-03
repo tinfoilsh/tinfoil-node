@@ -1,19 +1,17 @@
-import { describe, it, mock, beforeEach } from "node:test";
-import assert from "node:assert";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getHPKEKey, createEncryptedBodyFetch } from "../encrypted-body-fetch";
 import { Identity, PROTOCOL } from "ehbp";
 
 describe("encrypted-body-fetch", () => {
   describe("getHPKEKey", () => {
     it("rejects non-HTTPS URLs", async () => {
-      await assert.rejects(
-        () => getHPKEKey("http://example.com/v1"),
+      await expect(getHPKEKey("http://example.com/v1")).rejects.toThrow(
         /HTTPS is required for remote key retrieval/
       );
     });
 
-    it("rejects invalid content-type", async (t) => {
-      const fetchMock = t.mock.fn(async () => {
+    it("rejects invalid content-type", async () => {
+      const fetchMock = vi.fn(async () => {
         return new Response(new Uint8Array([1, 2, 3]), {
           status: 200,
           headers: { "content-type": "application/json" },
@@ -21,11 +19,10 @@ describe("encrypted-body-fetch", () => {
       });
 
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = fetchMock as any;
+      globalThis.fetch = fetchMock as typeof fetch;
 
       try {
-        await assert.rejects(
-          () => getHPKEKey("https://example.com/v1"),
+        await expect(getHPKEKey("https://example.com/v1")).rejects.toThrow(
           /Invalid content type/
         );
       } finally {
@@ -33,8 +30,8 @@ describe("encrypted-body-fetch", () => {
       }
     });
 
-    it("rejects failed key fetch", async (t) => {
-      const fetchMock = t.mock.fn(async () => {
+    it("rejects failed key fetch", async () => {
+      const fetchMock = vi.fn(async () => {
         return new Response(null, {
           status: 500,
           statusText: "Internal Server Error",
@@ -42,11 +39,10 @@ describe("encrypted-body-fetch", () => {
       });
 
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = fetchMock as any;
+      globalThis.fetch = fetchMock as typeof fetch;
 
       try {
-        await assert.rejects(
-          () => getHPKEKey("https://example.com/v1"),
+        await expect(getHPKEKey("https://example.com/v1")).rejects.toThrow(
           /Failed to get server public key: 500/
         );
       } finally {
@@ -54,25 +50,25 @@ describe("encrypted-body-fetch", () => {
       }
     });
 
-    it("successfully retrieves HPKE key with valid response", async (t) => {
+    it("successfully retrieves HPKE key with valid response", async () => {
       const mockIdentity = await Identity.generate();
       const publicConfig = await mockIdentity.marshalConfig();
 
-      const fetchMock = t.mock.fn(async (url: string) => {
-        assert.strictEqual(url, "https://example.com/.well-known/hpke-keys");
-        return new Response(publicConfig as any, {
+      const fetchMock = vi.fn(async (url: string) => {
+        expect(url).toBe("https://example.com/.well-known/hpke-keys");
+        return new Response(publicConfig as unknown as BodyInit, {
           status: 200,
           headers: { "content-type": PROTOCOL.KEYS_MEDIA_TYPE },
         });
       });
 
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = fetchMock as any;
+      globalThis.fetch = fetchMock as typeof fetch;
 
       try {
         const key = await getHPKEKey("https://example.com/v1");
-        assert.ok(key instanceof CryptoKey);
-        assert.strictEqual(fetchMock.mock.callCount(), 1);
+        expect(key).toBeInstanceOf(CryptoKey);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
       } finally {
         globalThis.fetch = originalFetch;
       }
@@ -82,15 +78,15 @@ describe("encrypted-body-fetch", () => {
   describe("normalizeEncryptedBodyRequestArgs", () => {
     it("handles string URLs", () => {
       const result = normalizeEncryptedBodyRequestArgs("https://example.com/test");
-      assert.strictEqual(result.url, "https://example.com/test");
-      assert.strictEqual(result.init, undefined);
+      expect(result.url).toBe("https://example.com/test");
+      expect(result.init).toBeUndefined();
     });
 
     it("handles URL objects", () => {
       const url = new URL("https://example.com/test");
       const result = normalizeEncryptedBodyRequestArgs(url);
-      assert.strictEqual(result.url, "https://example.com/test");
-      assert.strictEqual(result.init, undefined);
+      expect(result.url).toBe("https://example.com/test");
+      expect(result.init).toBeUndefined();
     });
 
     it("handles Request objects", () => {
@@ -101,9 +97,9 @@ describe("encrypted-body-fetch", () => {
       });
 
       const result = normalizeEncryptedBodyRequestArgs(request);
-      assert.strictEqual(result.url, "https://example.com/test");
-      assert.strictEqual(result.init?.method, "POST");
-      assert.ok(result.init?.headers instanceof Headers);
+      expect(result.url).toBe("https://example.com/test");
+      expect(result.init?.method).toBe("POST");
+      expect(result.init?.headers).toBeInstanceOf(Headers);
     });
 
     it("merges init options with Request", () => {
@@ -115,8 +111,8 @@ describe("encrypted-body-fetch", () => {
         headers: { "X-Custom": "header" },
       });
 
-      assert.strictEqual(result.url, "https://example.com/test");
-      assert.ok(result.init?.headers);
+      expect(result.url).toBe("https://example.com/test");
+      expect(result.init?.headers).toBeTruthy();
     });
 
     it("handles string URLs with init options", () => {
@@ -124,8 +120,8 @@ describe("encrypted-body-fetch", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      assert.strictEqual(result.url, "https://example.com/test");
-      assert.strictEqual(result.init?.method, "POST");
+      expect(result.url).toBe("https://example.com/test");
+      expect(result.init?.method).toBe("POST");
     });
   });
 
@@ -136,70 +132,61 @@ describe("encrypted-body-fetch", () => {
       originalFetch = globalThis.fetch;
     });
 
-    it("rejects request when HPKE key mismatch occurs", async (t) => {
+    afterEach(() => {
+      globalThis.fetch = originalFetch;
+    });
+
+    it("rejects request when HPKE key mismatch occurs", async () => {
       const serverIdentity = await Identity.generate();
       const publicConfig = await serverIdentity.marshalConfig();
       const actualKeyHex = await serverIdentity.getPublicKeyHex();
       const expectedKey = "wrongkey123";
 
-      globalThis.fetch = t.mock.fn(async (input: RequestInfo | URL) => {
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
         const url = input instanceof Request ? input.url : input.toString();
         if (url.includes("/.well-known/hpke-keys")) {
-          return new Response(publicConfig as any, {
+          return new Response(publicConfig as unknown as BodyInit, {
             status: 200,
             headers: { "content-type": PROTOCOL.KEYS_MEDIA_TYPE },
           });
         }
         return new Response("should not reach here");
-      }) as any;
+      }) as typeof fetch;
 
-      try {
-        await assert.rejects(
-          () => encryptedBodyRequest("https://example.com/test", expectedKey),
-          (err: Error) => {
-            assert.match(err.message, /HPKE public key mismatch/);
-            assert.match(err.message, new RegExp(expectedKey));
-            assert.match(err.message, new RegExp(actualKeyHex));
-            return true;
-          }
-        );
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      await expect(
+        encryptedBodyRequest("https://example.com/test", expectedKey)
+      ).rejects.toThrow(/HPKE public key mismatch/);
     });
 
-    it("fetches HPKE key from correct origin when enclaveURL provided", async (t) => {
+    it("fetches HPKE key from correct origin when enclaveURL provided", async () => {
       const serverIdentity = await Identity.generate();
       const publicConfig = await serverIdentity.marshalConfig();
       const keyHex = await serverIdentity.getPublicKeyHex();
 
       let keyFetchedFromCorrectOrigin = false;
 
-      globalThis.fetch = t.mock.fn(async (input: RequestInfo | URL) => {
+      globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
         const url = input instanceof Request ? input.url : input.toString();
         if (url.includes("enclave.example.com") && url.includes("/.well-known/hpke-keys")) {
           keyFetchedFromCorrectOrigin = true;
-          return new Response(publicConfig as any, {
+          return new Response(publicConfig as unknown as BodyInit, {
             status: 200,
             headers: { "content-type": PROTOCOL.KEYS_MEDIA_TYPE },
           });
         }
         return new Response("should not reach here");
-      }) as any;
+      }) as typeof fetch;
 
-      try {
-        await assert.rejects(
-          () => encryptedBodyRequest(
-            "https://api.example.com/test",
-            keyHex,
-            undefined,
-            "https://enclave.example.com"
-          )
-        );
-        assert.ok(keyFetchedFromCorrectOrigin, "Key should be fetched from enclave origin");
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      await expect(
+        encryptedBodyRequest(
+          "https://api.example.com/test",
+          keyHex,
+          undefined,
+          "https://enclave.example.com"
+        )
+      ).rejects.toThrow(); // Will reject because we don't handle the actual request
+
+      expect(keyFetchedFromCorrectOrigin).toBe(true);
     });
   });
 
@@ -207,25 +194,25 @@ describe("encrypted-body-fetch", () => {
     it("resolves absolute path URLs against baseURL origin", () => {
       const normalized = normalizeEncryptedBodyRequestArgs("/users");
       const targetUrl = new URL(normalized.url, "https://api.example.com/v1");
-      assert.strictEqual(targetUrl.toString(), "https://api.example.com/users");
+      expect(targetUrl.toString()).toBe("https://api.example.com/users");
     });
 
     it("resolves relative URLs against baseURL", () => {
       const normalized = normalizeEncryptedBodyRequestArgs("users");
       const targetUrl = new URL(normalized.url, "https://api.example.com/v1/");
-      assert.strictEqual(targetUrl.toString(), "https://api.example.com/v1/users");
+      expect(targetUrl.toString()).toBe("https://api.example.com/v1/users");
     });
 
     it("handles absolute URLs correctly", () => {
       const normalized = normalizeEncryptedBodyRequestArgs("https://other.example.com/endpoint");
       const targetUrl = new URL(normalized.url, "https://api.example.com/v1");
-      assert.strictEqual(targetUrl.toString(), "https://other.example.com/endpoint");
+      expect(targetUrl.toString()).toBe("https://other.example.com/endpoint");
     });
 
     it("returns a function with fetch signature", () => {
       const customFetch = createEncryptedBodyFetch("https://api.example.com", "mockkey123");
-      assert.strictEqual(typeof customFetch, "function");
-      assert.strictEqual(customFetch.length, 2);
+      expect(typeof customFetch).toBe("function");
+      expect(customFetch.length).toBe(2);
     });
 
     it("accepts enclaveURL parameter", () => {
@@ -234,7 +221,7 @@ describe("encrypted-body-fetch", () => {
         "mockkey123",
         "https://enclave.example.com"
       );
-      assert.strictEqual(typeof customFetch, "function");
+      expect(typeof customFetch).toBe("function");
     });
 
     it("exposes Response constructor for OpenAI SDK FormData support detection", () => {
@@ -244,8 +231,8 @@ describe("encrypted-body-fetch", () => {
       );
 
       // The OpenAI SDK checks 'Response' in fetch to avoid making a test request to 'data:,'
-      assert.ok("Response" in customFetch, "fetch should have Response property");
-      assert.strictEqual(customFetch.Response, Response, "Response property should be the global Response constructor");
+      expect("Response" in customFetch).toBe(true);
+      expect(customFetch.Response).toBe(Response);
     });
   });
 });

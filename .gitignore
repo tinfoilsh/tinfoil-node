@@ -1,5 +1,4 @@
 .idea/
-verifier
 node_modules/
 .node-tests/
 .env
@@ -8,3 +7,4 @@ dist/
 packages/*/dist/
 packages/*/.node-tests/
 __screenshots__/
+sigstore-browser/

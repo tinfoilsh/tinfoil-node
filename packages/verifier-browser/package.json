@@ -43,6 +43,7 @@
   "dependencies": {
     "@freedomofpress/crypto-browser": "^0.1.4",
     "@freedomofpress/sigstore-browser": "^0.1.3",
-    "@freedomofpress/tuf-browser": "^0.1.5"
+    "@freedomofpress/tuf-browser": "^0.1.5",
+    "@tinfoil/verifier-core": "*"
   }
 }
