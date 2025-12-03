@@ -29,6 +29,7 @@
     },
     "./verifier": {
       "types": "./dist/verifier.d.ts",
+      "browser": "./dist/esm/verifier.browser.mjs",
       "import": "./dist/esm/verifier.mjs",
       "require": "./dist/verifier.js"
     },
@@ -79,6 +80,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@tinfoil/verifier-browser": "*",
     "@ai-sdk/openai-compatible": "^1.0.10",
     "ai": "^5.0.19",
     "dotenv": "^17.2.1",
