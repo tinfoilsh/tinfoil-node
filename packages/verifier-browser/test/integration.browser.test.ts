@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { Verifier } from '../src/client.js';
+import { compareMeasurements, measurementFingerprint, PredicateType, FormatMismatchError, MeasurementMismatchError } from '../src/types.js';
+
+const DEFAULT_ENCLAVE_URL = 'https://inference.tinfoil.sh';
 
 describe('Browser Integration Tests', () => {
   describe('Verifier against real enclave', () => {
     it('should verify enclave with default config repo', async () => {
       const verifier = new Verifier({
-        serverURL: 'https://inference.tinfoil.sh'
+        serverURL: DEFAULT_ENCLAVE_URL
       });
 
       const result = await verifier.verify();
@@ -27,7 +30,7 @@ describe('Browser Integration Tests', () => {
 
     it('should return TLS public key fingerprint', async () => {
       const verifier = new Verifier({
-        serverURL: 'https://inference.tinfoil.sh'
+        serverURL: DEFAULT_ENCLAVE_URL
       });
 
       const result = await verifier.verify();
@@ -38,7 +41,7 @@ describe('Browser Integration Tests', () => {
 
     it('should return HPKE public key', async () => {
       const verifier = new Verifier({
-        serverURL: 'https://inference.tinfoil.sh'
+        serverURL: DEFAULT_ENCLAVE_URL
       });
 
       const result = await verifier.verify();
@@ -49,7 +52,7 @@ describe('Browser Integration Tests', () => {
 
     it('should populate verification document fingerprints', async () => {
       const verifier = new Verifier({
-        serverURL: 'https://inference.tinfoil.sh'
+        serverURL: DEFAULT_ENCLAVE_URL
       });
 
       await verifier.verify();
@@ -60,6 +63,131 @@ describe('Browser Integration Tests', () => {
       expect(doc!.releaseDigest).toBeTruthy();
       expect(doc!.tlsPublicKey).toBeTruthy();
     }, 30000);
+
+    it('should verify enclave with custom config repo', async () => {
+      const verifier = new Verifier({
+        serverURL: DEFAULT_ENCLAVE_URL,
+        configRepo: 'tinfoilsh/confidential-model-router'
+      });
+
+      const result = await verifier.verify();
+
+      expect(result).toBeDefined();
+      expect(result.measurement).toBeDefined();
+
+      const doc = verifier.getVerificationDocument();
+      expect(doc).toBeDefined();
+      expect(doc!.configRepo).toBe('tinfoilsh/confidential-model-router');
+      expect(doc!.securityVerified).toBe(true);
+    }, 30000);
+  });
+
+  describe('Verification document completeness', () => {
+    it('should populate all required fields in verification document', async () => {
+      const verifier = new Verifier({
+        serverURL: DEFAULT_ENCLAVE_URL
+      });
+
+      await verifier.verify();
+      const doc = verifier.getVerificationDocument();
+
+      expect(doc).toBeDefined();
+      expect(doc!.configRepo).toBeTruthy();
+      expect(doc!.enclaveHost).toBeTruthy();
+      expect(doc!.releaseDigest).toBeTruthy();
+      expect(doc!.codeMeasurement).toBeDefined();
+      expect(doc!.codeMeasurement.type).toBeTruthy();
+      expect(doc!.codeMeasurement.registers).toBeInstanceOf(Array);
+      expect(doc!.enclaveMeasurement).toBeDefined();
+      expect(doc!.enclaveMeasurement.measurement).toBeDefined();
+      expect(doc!.tlsPublicKey).toBeTruthy();
+      expect(doc!.codeFingerprint).toBeTruthy();
+      expect(doc!.enclaveFingerprint).toBeTruthy();
+      expect(doc!.selectedRouterEndpoint).toBeTruthy();
+      expect(doc!.securityVerified).toBe(true);
+      expect(doc!.steps).toBeDefined();
+    }, 30000);
+
+    it('should have matching code and enclave fingerprints for verified enclave', async () => {
+      const verifier = new Verifier({
+        serverURL: DEFAULT_ENCLAVE_URL
+      });
+
+      await verifier.verify();
+      const doc = verifier.getVerificationDocument();
+
+      expect(doc!.codeFingerprint).toBe(doc!.enclaveFingerprint);
+    }, 30000);
+
+    it('should have consistent measurement types between code and enclave', async () => {
+      const verifier = new Verifier({
+        serverURL: DEFAULT_ENCLAVE_URL
+      });
+
+      await verifier.verify();
+      const doc = verifier.getVerificationDocument();
+
+      const codeType = doc!.codeMeasurement.type;
+      const enclaveType = doc!.enclaveMeasurement.measurement.type;
+
+      const snpCompatibleTypes = [
+        PredicateType.SevGuestV1,
+        PredicateType.SevGuestV2,
+        PredicateType.SnpTdxMultiplatformV1
+      ];
+
+      if (codeType === enclaveType) {
+        expect(true).toBe(true);
+      } else {
+        expect(snpCompatibleTypes).toContain(codeType);
+        expect(snpCompatibleTypes).toContain(enclaveType);
+      }
+    }, 30000);
+  });
+
+  describe('Measurement operations', () => {
+    it('should compute fingerprint for single-register measurement', async () => {
+      const measurement = { type: 'sev-snp', registers: ['abc123'] };
+      const fingerprint = await measurementFingerprint(measurement);
+      expect(fingerprint).toBe('abc123');
+    });
+
+    it('should compute SHA-256 fingerprint for multi-register measurement', async () => {
+      const measurement = { type: 'sev-snp', registers: ['abc', 'def', 'ghi'] };
+      const fingerprint = await measurementFingerprint(measurement);
+      expect(fingerprint).toHaveLength(64);
+      expect(fingerprint).toMatch(/^[0-9a-f]+$/);
+    });
+
+    it('should compare matching measurements successfully', () => {
+      const a = { type: 'sev-snp', registers: ['abc123'] };
+      const b = { type: 'sev-snp', registers: ['abc123'] };
+      expect(() => compareMeasurements(a, b)).not.toThrow();
+    });
+
+    it('should throw FormatMismatchError for incompatible types', () => {
+      const a = { type: 'sev-snp', registers: ['abc123'] };
+      const b = { type: 'tdx-incompatible', registers: ['abc123'] };
+      expect(() => compareMeasurements(a, b)).toThrow(FormatMismatchError);
+    });
+
+    it('should throw MeasurementMismatchError for different registers', () => {
+      const a = { type: 'sev-snp', registers: ['abc123'] };
+      const b = { type: 'sev-snp', registers: ['def456'] };
+      expect(() => compareMeasurements(a, b)).toThrow(MeasurementMismatchError);
+    });
+
+    it('should allow comparison between compatible SNP types', () => {
+      const a = { type: PredicateType.SevGuestV1, registers: ['abc123'] };
+      const b = { type: PredicateType.SevGuestV2, registers: ['abc123'] };
+      expect(() => compareMeasurements(a, b)).not.toThrow();
+    });
+
+    it('should allow comparison between SNP and multiplatform types', () => {
+      const a = { type: PredicateType.SevGuestV2, registers: ['abc123'] };
+      const b = { type: PredicateType.SnpTdxMultiplatformV1, registers: ['abc123'] };
+      expect(() => compareMeasurements(a, b)).not.toThrow();
+    });
   });
 
   describe('Verification failure handling', () => {
@@ -74,5 +202,73 @@ describe('Browser Integration Tests', () => {
       expect(doc).toBeDefined();
       expect(doc!.securityVerified).toBe(false);
     }, 15000);
+
+    it('should mark verifyEnclave step as failed for unreachable server', async () => {
+      const verifier = new Verifier({
+        serverURL: 'https://invalid-enclave-that-does-not-exist.tinfoil.sh'
+      });
+
+      await expect(verifier.verify()).rejects.toThrow();
+
+      const doc = verifier.getVerificationDocument();
+      expect(doc!.steps.verifyEnclave.status).toBe('failed');
+      expect(doc!.steps.verifyEnclave.error).toBeTruthy();
+    }, 15000);
+
+    it('should require serverURL in constructor', () => {
+      expect(() => new Verifier({ serverURL: '' })).toThrow('serverURL is required');
+    });
+  });
+
+  describe('Verifier instance configuration', () => {
+    it('should use default config repo when not specified', async () => {
+      const verifier = new Verifier({
+        serverURL: DEFAULT_ENCLAVE_URL
+      });
+
+      await verifier.verify();
+      const doc = verifier.getVerificationDocument();
+
+      expect(doc!.configRepo).toBe('tinfoilsh/confidential-model-router');
+    }, 30000);
+
+    it('should extract hostname from serverURL correctly', async () => {
+      const verifier = new Verifier({
+        serverURL: 'https://inference.tinfoil.sh'
+      });
+
+      await verifier.verify();
+      const doc = verifier.getVerificationDocument();
+
+      expect(doc!.enclaveHost).toBe('inference.tinfoil.sh');
+    }, 30000);
+
+    it('should handle serverURL with trailing path', async () => {
+      const verifier = new Verifier({
+        serverURL: 'https://inference.tinfoil.sh/some/path'
+      });
+
+      await verifier.verify();
+      const doc = verifier.getVerificationDocument();
+
+      expect(doc!.enclaveHost).toBe('inference.tinfoil.sh');
+      expect(doc!.securityVerified).toBe(true);
+    }, 30000);
+  });
+
+  describe('Multiple verification calls', () => {
+    it('should allow re-verification with same verifier instance', async () => {
+      const verifier = new Verifier({
+        serverURL: DEFAULT_ENCLAVE_URL
+      });
+
+      const result1 = await verifier.verify();
+      expect(result1).toBeDefined();
+
+      const result2 = await verifier.verify();
+      expect(result2).toBeDefined();
+
+      expect(result1.measurement.registers).toEqual(result2.measurement.registers);
+    }, 60000);
   });
 });
