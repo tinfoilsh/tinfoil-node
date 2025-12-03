@@ -7,3 +7,4 @@ node_modules/
 dist/
 packages/*/dist/
 packages/*/.node-tests/
+__screenshots__/
