@@ -143,24 +143,21 @@ try {
 
 The project includes both unit tests and integration tests:
 
-### Running Unit Tests
-
 ```bash
+# Run unit tests for all packages
 npm test
+
+# Run integration tests for all packages (no env vars needed)
+npm run test:integration
+
+# Run browser unit tests in Chromium
+npm run test:browser -w @tinfoil/verifier-browser
+
+# Run browser integration tests against real enclave
+npm run test:integration -w @tinfoil/verifier-browser
 ```
 
-### Running Integration Tests
-
-```bash
-RUN_TINFOIL_INTEGRATION=true npm test
-```
-
-This runs the full test suite including integration tests that:
-- Make actual network requests to Tinfoil services
-- Perform real enclave attestation verification
-- Test end-to-end functionality with live services
-
-Integration tests are skipped by default to keep the test suite fast and avoid network dependencies during development.
+Integration tests make actual network requests to Tinfoil services and perform real enclave attestation verification.
 
 ## Running examples
 
