@@ -151,10 +151,10 @@ npm test
 npm run test:integration
 
 # Run browser unit tests in Chromium
-npm run test:browser -w @tinfoil/verifier-browser
+npm run test:browser
 
 # Run browser integration tests against real enclave
-npm run test:integration -w @tinfoil/verifier-browser
+npm run test:browser:integration
 ```
 
 Integration tests make actual network requests to Tinfoil services and perform real enclave attestation verification.
