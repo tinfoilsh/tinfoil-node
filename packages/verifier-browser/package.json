@@ -17,7 +17,7 @@
     "build": "vite build && tsc --emitDeclarationOnly",
     "test": "vitest run",
     "test:browser": "vitest run --config vite.config.playwright.ts",
-    "test:integration": "vitest run test/integration"
+    "test:integration": "vitest run --config vite.config.integration.ts"
   },
   "keywords": [
     "attestation",
