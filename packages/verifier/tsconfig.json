@@ -1,12 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["DOM", "ES2022"],
-    "sourceMap": true,
-    "resolveJsonModule": true,
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
 }

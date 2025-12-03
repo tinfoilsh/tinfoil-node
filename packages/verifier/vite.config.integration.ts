@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   test: {
-    include: ["**/integration.browser.test.ts"],
+    include: ["**/*.browser.integration.test.ts"],
     browser: {
       enabled: true,
       provider: "playwright",

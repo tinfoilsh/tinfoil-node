@@ -28,7 +28,6 @@
     },
     "./verifier": {
       "types": "./dist/verifier.d.ts",
-      "browser": "./dist/verifier.browser.js",
       "import": "./dist/verifier.js",
       "default": "./dist/verifier.js"
     },
@@ -53,6 +52,7 @@
     "build": "tsc",
     "test": "vitest run",
     "test:integration": "RUN_TINFOIL_INTEGRATION=true npm test",
+    "test:browser": "vitest run --config vite.config.browser.ts",
     "test:browser:integration": "vitest run --config vite.config.browser-test.ts",
     "lint": "eslint src/**/*.ts",
     "clean": "rm -rf dist",

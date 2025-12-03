@@ -1,6 +1,6 @@
 import { Report } from './report.js';
 import { CertificateChain } from './cert-chain.js';
-import { TCBParts, SnpPolicy, SnpPlatformInfo } from './types.js';
+import type { TCBParts, SnpPolicy, SnpPlatformInfo } from './types.js';
 import { tcbFromInt, bytesToHex } from './utils.js';
 import { ReportSigner } from './constants.js';
 
