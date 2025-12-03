@@ -1,6 +1,6 @@
-import { createEncryptedBodyFetch } from "./encrypted-body-fetch";
-import { createPinnedTlsFetch } from "./pinned-tls-fetch";
-import { isRealBrowser } from "./env";
+import { createEncryptedBodyFetch } from "./encrypted-body-fetch.js";
+import { createPinnedTlsFetch } from "./pinned-tls-fetch.js";
+import { isRealBrowser } from "./env.js";
 
 export function createSecureFetch(baseURL: string, enclaveURL?: string, hpkePublicKey?: string, tlsPublicKeyFingerprint?: string): typeof fetch {
 let fetchFunction: typeof fetch;

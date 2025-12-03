@@ -1,8 +1,8 @@
-import { Verifier } from "./verifier";
-import type { VerificationDocument } from "./verifier";
-import { TINFOIL_CONFIG } from "./config";
-import { createSecureFetch } from "tinfoil/secure-fetch";
-import { fetchRouter } from "./router";
+import { Verifier } from "./verifier.js";
+import type { VerificationDocument } from "./verifier.js";
+import { TINFOIL_CONFIG } from "./config.js";
+import { createSecureFetch } from "./secure-fetch.js";
+import { fetchRouter } from "./router.js";
 
 interface SecureClientOptions {
   baseURL?: string;

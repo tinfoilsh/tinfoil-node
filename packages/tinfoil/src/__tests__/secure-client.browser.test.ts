@@ -27,7 +27,7 @@ const mockVerificationDocument = {
   },
 };
 
-vi.mock("../verifier", () => ({
+vi.mock("../verifier.js", () => ({
   Verifier: class {
     verify() {
       return verifyMock();
@@ -39,7 +39,7 @@ vi.mock("../verifier", () => ({
 }));
 
 // Mock createSecureFetch to simulate browser behavior (throw when no HPKE key)
-vi.mock("tinfoil/secure-fetch", () => ({
+vi.mock("../secure-fetch.js", () => ({
   createSecureFetch: (_baseURL: string, _enclaveURL: string | undefined, hpkePublicKey: string | undefined) => {
     if (!hpkePublicKey) {
       throw new Error(

@@ -1,6 +1,6 @@
-import { TINFOIL_CONFIG } from "./config";
-import { createEncryptedBodyFetch } from "./encrypted-body-fetch";
-import { fetchRouter } from "./router";
+import { TINFOIL_CONFIG } from "./config.js";
+import { createEncryptedBodyFetch } from "./encrypted-body-fetch.js";
+import { fetchRouter } from "./router.js";
 
 interface UnverifiedClientOptions {
   baseURL?: string;
