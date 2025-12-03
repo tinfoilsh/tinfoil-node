@@ -40,6 +40,7 @@ export async function verifyAttestation(
   try {
     const {
       SigstoreVerifier,
+      TrustedRootProvider,
       GITHUB_OIDC_ISSUER,
       AllOf,
       OIDCIssuer,
@@ -47,7 +48,8 @@ export async function verifyAttestation(
     } = await import('@freedomofpress/sigstore-browser');
 
     const verifier = new SigstoreVerifier();
-    await verifier.loadSigstoreRootWithTUF();
+    const tufProvider = new TrustedRootProvider({ disableCache: true });
+    await verifier.loadSigstoreRootWithTUF(tufProvider);
 
     const bundle = bundleJson as any;
 

@@ -5,9 +5,11 @@
     "lib": ["DOM", "ES2022"],
     "module": "ESNext",
     "sourceMap": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "outDir": "./dist"
+    "outDir": "./dist/esm",
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]
