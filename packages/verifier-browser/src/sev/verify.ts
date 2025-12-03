@@ -35,26 +35,43 @@ async function verifyReportSignature(
     throw new Error(`Unknown SignatureAlgo: ${report.signatureAlgo}`);
   }
 
-  // Convert the raw signature to DER format
+  // Convert the signature from AMD's little-endian format to WebCrypto raw format
   // The signature in the report is in raw R||S format in AMD's little-endian format
-  // Each component is 72 bytes (0x48) for P384
-  const rBytes = reverseBytes(report.signature.slice(0, 0x48));
-  const sBytes = reverseBytes(report.signature.slice(0x48, 0x90));
+  // Each component is 72 bytes (0x48) for P384, zero-extended
+  // WebCrypto expects raw format: R || S as big-endian, each padded to curve size (48 bytes for P-384)
 
-  const rBytesStripped = stripLeadingZeros(rBytes);
-  const sBytesStripped = stripLeadingZeros(sBytes);
+  // Reverse bytes to convert from little-endian to big-endian
+  const rBytesLE = report.signature.slice(0, 0x48);
+  const sBytesLE = report.signature.slice(0x48, 0x90);
 
-  const r = bytesToBigInt(rBytesStripped);
-  const s = bytesToBigInt(sBytesStripped);
+  const rBytesBE = reverseBytes(rBytesLE);
+  const sBytesBE = reverseBytes(sBytesLE);
 
-  const derSignature = encodeDerSignature(r, s);
+  // Strip leading zeros and convert to BigInt for normalization
+  const r = bytesToBigInt(stripLeadingZeros(rBytesBE));
+  const s = bytesToBigInt(stripLeadingZeros(sBytesBE));
+
+  // Convert back to fixed 48-byte arrays (P-384 curve size)
+  const rRaw = bigIntToFixedBytes(r, 48);
+  const sRaw = bigIntToFixedBytes(s, 48);
+
+  // Create raw signature: R || S
+  const rawSignature = new Uint8Array(96);
+  rawSignature.set(rRaw, 0);
+  rawSignature.set(sRaw, 48);
+
+  // Get the signed data buffer - need to slice properly since signedData may be a view
+  const signedDataBuffer = report.signedData.buffer.slice(
+    report.signedData.byteOffset,
+    report.signedData.byteOffset + report.signedData.byteLength
+  );
 
   try {
     const isValid = await crypto.subtle.verify(
       { name: KeyTypes.Ecdsa, hash: HashAlgorithms.SHA384 },
       vcekPublicKey,
-      derSignature.buffer as ArrayBuffer,
-      report.signedData.buffer as ArrayBuffer
+      rawSignature.buffer,
+      signedDataBuffer
     );
 
     return isValid;
@@ -77,14 +94,14 @@ export async function verifyAttestation(
   // Verify certificate chain
   const isChainValid = await chain.verifyChain();
   if (!isChainValid) {
-    return false;
+    throw new Error('Certificate chain verification returned false');
   }
 
   // Verify report - get the CryptoKey from VCEK certificate
   const vcekPublicKey = await chain.vcekPublicKey;
   const isSignatureValid = await verifyReportSignature(vcekPublicKey, report);
   if (!isSignatureValid) {
-    return false;
+    throw new Error('Report signature verification returned false');
   }
 
   return true;
@@ -135,59 +152,25 @@ function bytesToBigInt(bytes: Uint8Array): bigint {
 }
 
 /**
- * Encode the signature in DER format.
- *
- * @param r - The R component of the signature
- * @param s - The S component of the signature
- * @returns The signature in DER format
- */
-function encodeDerSignature(r: bigint, s: bigint): Uint8Array {
-  const rBytes = bigIntToMinimalBytes(r);
-  const sBytes = bigIntToMinimalBytes(s);
-
-  const rLength = rBytes.length;
-  const sLength = sBytes.length;
-
-  const totalLength = 2 + rLength + 2 + sLength;
-
-  const der = new Uint8Array(2 + totalLength);
-  let offset = 0;
-
-  der[offset++] = 0x30;
-  der[offset++] = totalLength;
-
-  der[offset++] = 0x02;
-  der[offset++] = rLength;
-  der.set(rBytes, offset);
-  offset += rLength;
-
-  der[offset++] = 0x02;
-  der[offset++] = sLength;
-  der.set(sBytes, offset);
-
-  return der;
-}
-
-/**
- * Convert a bigint to a minimal bytes array.
+ * Convert a bigint to a fixed-size bytes array (big-endian, zero-padded).
  *
  * @param value - The bigint to convert
+ * @param size - The desired size in bytes
  * @returns The bytes array
  */
-function bigIntToMinimalBytes(value: bigint): Uint8Array {
+function bigIntToFixedBytes(value: bigint, size: number): Uint8Array {
   let hex = value.toString(16);
   if (hex.length % 2) {
     hex = '0' + hex;
   }
 
-  const bytes: number[] = [];
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes.push(parseInt(hex.slice(i, i + 2), 16));
+  const bytes = new Uint8Array(size);
+  const hexBytes = hex.length / 2;
+  const startOffset = size - hexBytes;
+
+  for (let i = 0; i < hexBytes; i++) {
+    bytes[startOffset + i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
 
-  if (bytes[0] & 0x80) {
-    bytes.unshift(0x00);
-  }
-
-  return new Uint8Array(bytes);
+  return bytes;
 }
