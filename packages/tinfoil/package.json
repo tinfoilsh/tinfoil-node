@@ -71,8 +71,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@tinfoil/verifier-browser": "*",
-    "@tinfoil/verifier-node": "*",
+    "@tinfoilsh/verifier": "*",
     "@ai-sdk/openai-compatible": "^1.0.10",
     "ai": "^5.0.19",
     "dotenv": "^17.2.1",
