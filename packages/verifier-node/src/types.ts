@@ -16,7 +16,8 @@ export type {
   HardwareMeasurement,
 } from '@tinfoil/verifier-core';
 
-// Browser-specific implementation using Web Crypto API
+// Node.js-specific implementation using crypto module
+import crypto from 'crypto';
 import type { AttestationMeasurement } from '@tinfoil/verifier-core';
 
 /**
@@ -24,14 +25,12 @@ import type { AttestationMeasurement } from '@tinfoil/verifier-core';
  * If there is only one register, returns that register directly.
  * Otherwise, returns SHA-256 hash of type + all registers concatenated.
  */
-export async function measurementFingerprint(m: AttestationMeasurement): Promise<string> {
+export function measurementFingerprint(m: AttestationMeasurement): string {
   if (m.registers.length === 1) {
     return m.registers[0];
   }
 
   const allData = m.type + m.registers.join('');
-  const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(allData));
-  const hashArray = new Uint8Array(hashBuffer);
-  return Array.from(hashArray).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hash = crypto.createHash('sha256').update(allData).digest('hex');
+  return hash;
 }

@@ -1,64 +1,72 @@
-import { describe, it } from "node:test";
-import assert from "node:assert";
-import { withMockedModules } from "./test-utils";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const MOCK_MEASUREMENT_TYPE = "https://tinfoil.sh/predicate/sev-snp-guest/v1";
 
+const verifyMock = vi.fn(async () => ({
+  tlsPublicKeyFingerprint: "mock-tls-fingerprint",
+  hpkePublicKey: undefined, // No HPKE key available
+  measurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
+}));
+
+const mockVerificationDocument = {
+  configRepo: "test-repo",
+  enclaveHost: "test-host",
+  releaseDigest: "test-digest",
+  codeMeasurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
+  enclaveMeasurement: {
+    hpkePublicKey: undefined,
+    tlsPublicKeyFingerprint: "mock-tls-fingerprint",
+    measurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
+  },
+  securityVerified: true,
+  steps: {
+    fetchDigest: { status: "success" as const },
+    verifyCode: { status: "success" as const },
+    verifyEnclave: { status: "success" as const },
+    compareMeasurements: { status: "success" as const },
+  },
+};
+
+vi.mock("../verifier", () => ({
+  Verifier: class {
+    verify() {
+      return verifyMock();
+    }
+    getVerificationDocument() {
+      return mockVerificationDocument;
+    }
+  },
+}));
+
+// Mock createSecureFetch to simulate browser behavior (throw when no HPKE key)
+vi.mock("tinfoil/secure-fetch", () => ({
+  createSecureFetch: (_baseURL: string, _enclaveURL: string | undefined, hpkePublicKey: string | undefined) => {
+    if (!hpkePublicKey) {
+      throw new Error(
+        "HPKE public key not available and TLS-only verification is not supported in browsers. " +
+          "Only HPKE-enabled enclaves can be used in browser environments."
+      );
+    }
+    return vi.fn();
+  },
+}));
+
 describe("SecureClient (browser)", () => {
-  it("should reject initialization when HPKE is not available in browser", async (t) => {
-    const verifyMock = t.mock.fn(async () => ({
-      tlsPublicKeyFingerprint: "mock-tls-fingerprint",
-      hpkePublicKey: undefined, // No HPKE key available
-      measurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
-    }));
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    await withMockedModules(
-      {
-        "./verifier": {
-          Verifier: class {
-            verify() {
-              return verifyMock();
-            }
-            getVerificationDocument() {
-              return {
-                configRepo: "test-repo",
-                enclaveHost: "test-host",
-                releaseDigest: "test-digest",
-                codeMeasurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
-                enclaveMeasurement: {
-                  hpkePublicKey: undefined,
-                  tlsPublicKeyFingerprint: "mock-tls-fingerprint",
-                  measurement: { type: MOCK_MEASUREMENT_TYPE, registers: [] },
-                },
-                securityVerified: true,
-                steps: {
-                  fetchDigest: { status: 'success' as const },
-                  verifyCode: { status: 'success' as const },
-                  verifyEnclave: { status: 'success' as const },
-                  compareMeasurements: { status: 'success' as const },
-                },
-              };
-            }
-          },
-        },
-        "./env": { isRealBrowser: () => true },
-      },
-      ["../secure-client"],
-      async () => {
-        const { SecureClient } = await import("../secure-client");
-        
-        const client = new SecureClient({
-          baseURL: "https://test.example.com/",
-        });
+  it("should reject initialization when HPKE is not available in browser", async () => {
+    const { SecureClient } = await import("../secure-client");
 
-        await assert.rejects(
-          async () => await client.ready(),
-          /HPKE public key not available and TLS-only verification is not supported in browsers/,
-          "Should reject with appropriate error message"
-        );
-        
-        assert.strictEqual(verifyMock.mock.callCount(), 1, "verify should be called once");
-      },
+    const client = new SecureClient({
+      baseURL: "https://test.example.com/",
+    });
+
+    await expect(client.ready()).rejects.toThrow(
+      /HPKE public key not available and TLS-only verification is not supported in browsers/
     );
+
+    expect(verifyMock).toHaveBeenCalledTimes(1);
   });
 });

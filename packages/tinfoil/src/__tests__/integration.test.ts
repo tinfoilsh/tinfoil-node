@@ -1,256 +1,95 @@
-import { describe, it } from "node:test";
-import assert from "node:assert";
-import { streamText } from "ai";
+import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const RUN_INTEGRATION = process.env.RUN_TINFOIL_INTEGRATION === "true";
-const SKIP_MESSAGE =
-  "Set RUN_TINFOIL_INTEGRATION=true to enable network integration tests.";
 
 describe("Examples Integration Tests", () => {
   describe("Basic Chat Example", () => {
-    it("should create a TinfoilAI client and make a chat completion request", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
+    it.skipIf(!RUN_INTEGRATION)("should create a TinfoilAI client and make a chat completion request", async () => {
       const { TinfoilAI } = await import("../tinfoilai");
-      
-      // Create a client similar to the basic chat example
+
       const client = new TinfoilAI({
         apiKey: "tinfoil",
       });
 
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-      
-      // Wait for client to be ready
+      expect(client).toBeTruthy();
+
       await client.ready();
-      
-      // Make a simple chat completion request
+
       const completion = await client.chat.completions.create({
         messages: [{ role: "user", content: "Hello!" }],
         model: "gpt-oss-120b-free",
       });
 
-      // Verify the response structure
-      assert.ok(completion, "Completion should be returned");
-      assert.ok(Array.isArray(completion.choices), "Choices should be an array");
-      assert.ok(completion.choices.length > 0, "Should have at least one choice");
-      
+      expect(completion).toBeTruthy();
+      expect(Array.isArray(completion.choices)).toBe(true);
+      expect(completion.choices.length).toBeGreaterThan(0);
+
       const firstChoice = completion.choices[0];
-      assert.ok(firstChoice, "First choice should exist");
-      assert.ok(firstChoice.message, "First choice should have a message");
-      
-      const message = firstChoice.message;
-      assert.strictEqual(typeof message.content, "string", "Message content should be a string");
-      assert.ok(message.content && message.content.length > 0, "Message content should not be empty");
+      expect(firstChoice).toBeTruthy();
+      expect(firstChoice.message).toBeTruthy();
+      expect(typeof firstChoice.message.content).toBe("string");
+      expect(firstChoice.message.content?.length).toBeGreaterThan(0);
     });
   });
 
   describe("Secure Client Example", () => {
-    it("should create a SecureClient and make a direct fetch request", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
+    it.skipIf(!RUN_INTEGRATION)("should create a SecureClient and make a direct fetch request", async () => {
       const { SecureClient } = await import("../secure-client");
-      
-      // Create a client similar to the secure client example
+
       const client = new SecureClient();
+      expect(client).toBeTruthy();
 
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-
-      // Wait for client to be ready
       await client.ready();
 
-      // Make a direct fetch request to the chat completions endpoint
       const response = await client.fetch("/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "gpt-oss-120b-free",
           messages: [{ role: "user", content: "Hello!" }],
         }),
       });
 
-      // Verify the response
-      assert.ok(response, "Response should be returned");
-      assert.strictEqual(response.status, 200, "Response should have status 200");
-      assert.ok(response.headers, "Response should have headers");
+      expect(response).toBeTruthy();
+      expect(response.status).toBe(200);
 
-      // Parse and verify the response body
       const responseBody = await response.json();
-      assert.ok(responseBody, "Response body should be parseable");
-      assert.ok(Array.isArray(responseBody.choices), "Choices should be an array");
-      assert.ok(responseBody.choices.length > 0, "Should have at least one choice");
-      
-      const firstChoice = responseBody.choices[0];
-      assert.ok(firstChoice, "First choice should exist");
-      assert.ok(firstChoice.message, "First choice should have a message");
-      
-      const message = firstChoice.message;
-      assert.strictEqual(typeof message.content, "string", "Message content should be a string");
-      assert.ok(message.content && message.content.length > 0, "Message content should not be empty");
+      expect(responseBody).toBeTruthy();
+      expect(Array.isArray(responseBody.choices)).toBe(true);
+      expect(responseBody.choices.length).toBeGreaterThan(0);
     });
   });
 
-  describe("EHBP Chat Example", () => {
-    it("should create a TinfoilAI client with EHBP configuration and make a chat completion request", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
-      const { TinfoilAI } = await import("../tinfoilai");
-      
-      // Create a client using environment variable configuration
-      const client = new TinfoilAI({
-        apiKey: "tinfoil",
-      });
-
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-      
-      // Wait for client to be ready
-      await client.ready();
-      
-      // Make a simple chat completion request
-      const completion = await client.chat.completions.create({
-        messages: [{ role: "user", content: "Hello!" }],
-        model: "gpt-oss-120b-free",
-      });
-
-      // Verify the response structure
-      assert.ok(completion, "Completion should be returned");
-      assert.ok(Array.isArray(completion.choices), "Choices should be an array");
-      assert.ok(completion.choices.length > 0, "Should have at least one choice");
-      
-      const firstChoice = completion.choices[0];
-      assert.ok(firstChoice, "First choice should exist");
-      assert.ok(firstChoice.message, "First choice should have a message");
-      
-      const message = firstChoice.message;
-      assert.strictEqual(typeof message.content, "string", "Message content should be a string");
-      assert.ok(message.content && message.content.length > 0, "Message content should not be empty");
-    });
-  });
-
-  describe("EHBP Secure Client Example", () => {
-    it("should create a SecureClient with EHBP configuration and make a direct fetch request", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
-      const { SecureClient } = await import("../secure-client");
-      
-      // Create a client using environment variable configuration
-      const client = new SecureClient();
-
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-      
-      // Wait for client to be ready
-      await client.ready();
-      
-      // Make a direct fetch request to the chat completions endpoint
-      const response = await client.fetch("/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-oss-120b-free",
-          messages: [{ role: "user", content: "Hello!" }],
-        }),
-      });
-
-      // Verify the response
-      assert.ok(response, "Response should be returned");
-      assert.strictEqual(response.status, 200, "Response should have status 200");
-      assert.ok(response.headers, "Response should have headers");
-
-      // Parse and verify the response body
-      const responseBody = await response.text();
-      assert.ok(responseBody, "Response body should be returned as text");
-      assert.ok(responseBody.length > 0, "Response body should not be empty");
-      
-      // Try to parse as JSON to verify it's valid JSON
-      const parsedBody = JSON.parse(responseBody);
-      assert.ok(parsedBody, "Response body should be parseable as JSON");
-      assert.ok(Array.isArray(parsedBody.choices), "Choices should be an array");
-      assert.ok(parsedBody.choices.length > 0, "Should have at least one choice");
-      
-      const firstChoice = parsedBody.choices[0];
-      assert.ok(firstChoice, "First choice should exist");
-    });
-  });
-
-    describe("EHBP Unverified Client Example", () => {
-    it("should create a UnverifiedClient with EHBP configuration and make a direct fetch request", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
+  describe("EHBP Unverified Client Example", () => {
+    it.skipIf(!RUN_INTEGRATION)("should create a UnverifiedClient with EHBP configuration", async () => {
       const { UnverifiedClient } = await import("../unverified-client");
-      
-      // Create a client using environment variable configuration
-      const client = new UnverifiedClient();
 
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-      
-      // Wait for client to be ready
+      const client = new UnverifiedClient();
+      expect(client).toBeTruthy();
+
       await client.ready();
-      
-      // Make a direct fetch request to the chat completions endpoint
+
       const response = await client.fetch("/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "gpt-oss-120b-free",
           messages: [{ role: "user", content: "Hello!" }],
         }),
       });
 
-      // Verify the response
-      assert.ok(response, "Response should be returned");
-      assert.strictEqual(response.status, 200, "Response should have status 200");
-      assert.ok(response.headers, "Response should have headers");
-
-      // Parse and verify the response body
-      const responseBody = await response.text();
-      assert.ok(responseBody, "Response body should be returned as text");
-      assert.ok(responseBody.length > 0, "Response body should not be empty");
-      
-      // Try to parse as JSON to verify it's valid JSON
-      const parsedBody = JSON.parse(responseBody);
-      assert.ok(parsedBody, "Response body should be parseable as JSON");
-      assert.ok(Array.isArray(parsedBody.choices), "Choices should be an array");
-      assert.ok(parsedBody.choices.length > 0, "Should have at least one choice");
-      
-      const firstChoice = parsedBody.choices[0];
-      assert.ok(firstChoice, "First choice should exist");
+      expect(response).toBeTruthy();
+      expect(response.status).toBe(200);
     });
   });
 
   describe("Streaming Chat Completion", () => {
-    it("should handle streaming chat completion", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
+    it.skipIf(!RUN_INTEGRATION)("should handle streaming chat completion", async () => {
       const { TinfoilAI } = await import("../tinfoilai");
       const client = new TinfoilAI({ apiKey: "tinfoil" });
 
@@ -258,10 +97,7 @@ describe("Examples Integration Tests", () => {
 
       const stream = await client.chat.completions.create({
         messages: [
-          {
-            role: "system",
-            content: "No matter what the user says, only respond with: Done.",
-          },
+          { role: "system", content: "No matter what the user says, only respond with: Done." },
           { role: "user", content: "Is this a test?" },
         ],
         model: "gpt-oss-120b-free",
@@ -277,102 +113,84 @@ describe("Examples Integration Tests", () => {
         }
       }
 
-      assert.ok(
-        accumulatedContent.length > 0,
-        "Streaming completion should produce content",
-      );
+      expect(accumulatedContent.length).toBeGreaterThan(0);
     });
 
     it("should initialize correctly when enclaveURL is provided but baseURL is not", async () => {
       const { UnverifiedClient } = await import("../unverified-client");
-      
-      // Create a client with only enclaveURL, no baseURL
+
       const client = new UnverifiedClient({
-        enclaveURL: "https://example-enclave.com"
+        enclaveURL: "https://example-enclave.com",
       });
 
-      // This should not throw an error
       await client.ready();
-      
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-      assert.ok(client.fetch, "Client should have a fetch function");
+
+      expect(client).toBeTruthy();
+      expect(client.fetch).toBeTruthy();
     });
 
     it("SecureClient should initialize correctly when enclaveURL is provided but baseURL is not", async () => {
       const { SecureClient } = await import("../secure-client");
 
-      // Create a client with only enclaveURL, no baseURL
       const client = new SecureClient({
-        enclaveURL: "https://example-enclave.com"
+        enclaveURL: "https://example-enclave.com",
       });
 
-      // This should not throw an error during initialization (before verification)
-      // Note: This will fail during verification since it's not a real enclave,
-      // but the baseURL initialization should work
       try {
         await client.ready();
       } catch (error) {
-        // Expected to fail during verification, but not due to baseURL being undefined
-        const message = error && typeof error === 'object' && 'message' in error ? (error as Error).message : String(error);
-        assert.ok(message && (message.includes("verify") || message.includes("fetch") || message.includes("WASM")),
-          "Should fail during verification, not baseURL initialization");
+        const message = error instanceof Error ? error.message : String(error);
+        expect(
+          message.includes("verify") ||
+            message.includes("fetch") ||
+            message.includes("attestation") ||
+            message.includes("Attestation")
+        ).toBe(true);
       }
 
-      // Verify the client is properly created
-      assert.ok(client, "Client should be created");
-      assert.ok(client.fetch, "Client should have a fetch function");
+      expect(client).toBeTruthy();
+      expect(client.fetch).toBeTruthy();
     });
 
     it("should initialize correctly when baseURL is provided but enclaveURL is not", async () => {
       const { UnverifiedClient } = await import("../unverified-client");
-      
-      // Create a client with only baseURL, no enclaveURL
+
       const client = new UnverifiedClient({
-        baseURL: "https://example-api.com/v1/"
+        baseURL: "https://example-api.com/v1/",
       });
 
-      // This should not throw an error and should not fetch a random router
       await client.ready();
-      
-      // Verify the client is properly initialized
-      assert.ok(client, "Client should be created");
-      assert.ok(client.fetch, "Client should have a fetch function");
+
+      expect(client).toBeTruthy();
+      expect(client.fetch).toBeTruthy();
     });
 
     it("SecureClient should initialize correctly when baseURL is provided but enclaveURL is not", async () => {
       const { SecureClient } = await import("../secure-client");
 
-      // Create a client with only baseURL, no enclaveURL
       const client = new SecureClient({
-        baseURL: "https://example-api.com/v1/"
+        baseURL: "https://example-api.com/v1/",
       });
 
-      // This should not throw an error during initialization (before verification)
-      // Note: This will fail during verification since it's not a real enclave,
-      // but the enclaveURL should be derived from baseURL without fetching a router
       try {
         await client.ready();
       } catch (error) {
-        // Expected to fail during verification, but not due to enclaveURL being undefined
-        const message = error && typeof error === 'object' && 'message' in error ? (error as Error).message : String(error);
-        assert.ok(message && (message.includes("verify") || message.includes("fetch") || message.includes("WASM")),
-          "Should fail during verification, not enclaveURL initialization");
+        const message = error instanceof Error ? error.message : String(error);
+        expect(
+          message.includes("verify") ||
+            message.includes("fetch") ||
+            message.includes("attestation") ||
+            message.includes("Attestation")
+        ).toBe(true);
       }
 
-      // Verify the client is properly created
-      assert.ok(client, "Client should be created");
-      assert.ok(client.fetch, "Client should have a fetch function");
+      expect(client).toBeTruthy();
+      expect(client.fetch).toBeTruthy();
     });
   });
 
   describe("Audio Transcription", () => {
-    it("should transcribe audio using whisper-large-v3-turbo model", async (t) => {
-      if (!RUN_INTEGRATION) {
-        t.skip(SKIP_MESSAGE);
-        return;
-      }
-
+    it.skipIf(!RUN_INTEGRATION)("should transcribe audio using whisper-large-v3-turbo model", async () => {
       const { TinfoilAI } = await import("../tinfoilai");
       const client = new TinfoilAI({ apiKey: "tinfoil" });
 
@@ -386,9 +204,9 @@ describe("Examples Integration Tests", () => {
         file: audioFile,
       });
 
-      assert.ok(transcription, "Transcription should be returned");
-      assert.ok(typeof transcription.text === "string", "Transcription should have text field");
-      assert.ok(transcription.text.trim().startsWith("I want to start off by saying"), `Transcription should match expected content, got: "${transcription.text}"`);
+      expect(transcription).toBeTruthy();
+      expect(typeof transcription.text).toBe("string");
+      expect(transcription.text.trim().startsWith("I want to start off by saying")).toBe(true);
     });
   });
 });

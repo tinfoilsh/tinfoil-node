@@ -1,0 +1,44 @@
+{
+  "name": "@tinfoil/verifier-node",
+  "version": "0.1.0",
+  "description": "Node.js AMD SEV-SNP attestation verifier using sigstore-js",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "attestation",
+    "amd",
+    "sev-snp",
+    "verifier",
+    "node"
+  ],
+  "author": "Tinfoil",
+  "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.3"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@tinfoil/verifier-core": "*",
+    "@sigstore/verify": "^3.0.0",
+    "@sigstore/bundle": "^3.0.0",
+    "@sigstore/tuf": "^4.0.0",
+    "@sigstore/core": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

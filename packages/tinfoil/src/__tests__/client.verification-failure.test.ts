@@ -1,57 +1,46 @@
-import { describe, it } from "node:test";
-import type { TestContext } from "node:test";
-import assert from "node:assert";
-import { withMockedModules } from "./test-utils";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const createEncryptedBodyFetchMock = vi.fn(() => {
+  return (async () => new Response(null)) as typeof fetch;
+});
+
+vi.mock("../verifier", () => ({
+  Verifier: class {
+    verify() {
+      throw new Error("verify failed");
+    }
+    getVerificationDocument() {
+      return undefined;
+    }
+  },
+}));
+
+vi.mock("../encrypted-body-fetch", () => ({
+  createEncryptedBodyFetch: createEncryptedBodyFetchMock,
+}));
+
+vi.mock("tinfoil/secure-fetch", () => ({
+  createSecureFetch: createEncryptedBodyFetchMock,
+}));
 
 describe("Client verification gating", () => {
-  it("blocks client creation and requests when verification fails", async (t: TestContext) => {
-    const createEncryptedBodyFetch = t.mock.fn((_baseURL: string, _hpkeKey: string, _enclaveURL?: string) => {
-      return (async () => new Response(null)) as typeof fetch;
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-    await withMockedModules(
-      {
-        // Prevent ESM import issues by stubbing the OpenAI client
-        openai: class OpenAI {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          constructor(_opts?: any) {}
-        },
-        "./verifier": {
-          Verifier: class {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            constructor(_opts?: any) {}
-            verify() {
-              throw new Error("verify failed");
-            }
-            getVerificationDocument() {
-              return undefined;
-            }
-          },
-        },
-        "./encrypted-body-fetch": { createEncryptedBodyFetch },
-      },
-      ["../client"],
-      async () => {
-        const { TinfoilAI } = await import("../tinfoilai");
-        const client = new TinfoilAI({ apiKey: "test" });
+  it("blocks client creation and requests when verification fails", async () => {
+    const { TinfoilAI } = await import("../tinfoilai");
+    const client = new TinfoilAI({ apiKey: "test" });
 
-        await assert.rejects(() => client.ready(), /verify/);
+    await expect(client.ready()).rejects.toThrow(/verify/);
 
-        await assert.rejects(
-          () =>
-            client.chat.completions.create({
-              model: "gpt-oss-120b-free",
-              messages: [{ role: "user", content: "hi" }],
-            } as any),
-          /verify/,
-        );
+    await expect(
+      client.chat.completions.create({
+        model: "gpt-oss-120b-free",
+        messages: [{ role: "user", content: "hi" }],
+      })
+    ).rejects.toThrow(/verify/);
 
-        assert.strictEqual(
-          createEncryptedBodyFetch.mock.callCount(),
-          0,
-          "transport should not be created when verification fails",
-        );
-      },
-    );
+    expect(createEncryptedBodyFetchMock).not.toHaveBeenCalled();
   });
 });
