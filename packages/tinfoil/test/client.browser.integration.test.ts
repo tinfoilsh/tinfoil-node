@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { TinfoilAI } from '../tinfoilai';
-import { SecureClient } from '../secure-client';
-import { UnverifiedClient } from '../unverified-client';
+import { TinfoilAI } from '../src/tinfoilai';
+import { SecureClient } from '../src/secure-client';
+import { UnverifiedClient } from '../src/unverified-client';
 
 describe('Browser Client Integration Tests', () => {
   describe('TinfoilAI Client', () => {

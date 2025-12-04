@@ -35,7 +35,7 @@ const verifyMock = vi.fn(async () => ({
 const mockFetch = vi.fn(async () => new Response(null));
 const createSecureFetchMock = vi.fn(() => mockFetch);
 
-vi.mock("../verifier.js", () => ({
+vi.mock("../src/verifier.js", () => ({
   Verifier: class {
     verify() {
       return verifyMock();
@@ -46,7 +46,7 @@ vi.mock("../verifier.js", () => ({
   },
 }));
 
-vi.mock("../secure-fetch.js", () => ({
+vi.mock("../src/secure-fetch.js", () => ({
   createSecureFetch: createSecureFetchMock,
 }));
 
@@ -56,7 +56,7 @@ describe("Secure transport integration", () => {
   });
 
   it("configures the OpenAI SDK to use the encrypted body transport", async () => {
-    const { TinfoilAI } = await import("../tinfoilai");
+    const { TinfoilAI } = await import("../src/tinfoilai");
     const testBaseURL = "https://test-router.tinfoil.sh/v1/";
     const testEnclaveURL = "https://test-router.tinfoil.sh";
 
@@ -78,7 +78,7 @@ describe("Secure transport integration", () => {
   });
 
   it("provides the encrypted body transport to the AI SDK provider", async () => {
-    const { createTinfoilAI } = await import("../ai-sdk-provider");
+    const { createTinfoilAI } = await import("../src/ai-sdk-provider");
     const provider = await createTinfoilAI("api-key");
 
     expect(provider).toBeTruthy();

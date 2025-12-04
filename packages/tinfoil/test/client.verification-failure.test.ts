@@ -4,7 +4,7 @@ const createEncryptedBodyFetchMock = vi.fn(() => {
   return (async () => new Response(null)) as typeof fetch;
 });
 
-vi.mock("../verifier", () => ({
+vi.mock("../src/verifier.js", () => ({
   Verifier: class {
     verify() {
       throw new Error("verify failed");
@@ -15,11 +15,11 @@ vi.mock("../verifier", () => ({
   },
 }));
 
-vi.mock("../encrypted-body-fetch", () => ({
+vi.mock("../src/encrypted-body-fetch.js", () => ({
   createEncryptedBodyFetch: createEncryptedBodyFetchMock,
 }));
 
-vi.mock("tinfoil/secure-fetch", () => ({
+vi.mock("../src/secure-fetch.js", () => ({
   createSecureFetch: createEncryptedBodyFetchMock,
 }));
 
@@ -29,7 +29,7 @@ describe("Client verification gating", () => {
   });
 
   it("blocks client creation and requests when verification fails", async () => {
-    const { TinfoilAI } = await import("../tinfoilai");
+    const { TinfoilAI } = await import("../src/tinfoilai");
     const client = new TinfoilAI({ apiKey: "test" });
 
     await expect(client.ready()).rejects.toThrow(/verify/);

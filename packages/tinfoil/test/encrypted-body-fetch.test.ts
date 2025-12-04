@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getHPKEKey, createEncryptedBodyFetch } from "../encrypted-body-fetch";
+import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getHPKEKey, createEncryptedBodyFetch } from "../src/encrypted-body-fetch";
 import { Identity, PROTOCOL } from "ehbp";
 
 describe("encrypted-body-fetch", () => {
