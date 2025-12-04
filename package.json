@@ -14,5 +14,8 @@
   },
   "devDependencies": {
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@freedomofpress/sigstore-browser": "^0.1.10"
   }
 }
