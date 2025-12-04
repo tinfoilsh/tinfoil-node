@@ -114,7 +114,7 @@ export class CertificateChain {
 
       return true;
     } catch (e) {
-      throw new Error(`Certificate chain verification failed: ${e}`);
+      throw new Error('Certificate chain verification failed', { cause: e });
     }
   }
 

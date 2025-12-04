@@ -73,7 +73,7 @@ async function verifyReportSignature(
 
     return isValid;
   } catch (e) {
-    throw new Error(`Attestation signature verification failed: ${e}`);
+    throw new Error('Attestation signature verification failed', { cause: e });
   }
 }
 

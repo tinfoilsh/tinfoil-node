@@ -72,20 +72,20 @@ export async function fetchAttestationBundle(repo: string, digest: string): Prom
       throw new Error(`HTTP ${bundleResponse.status} ${bundleResponse.statusText}`);
     }
   } catch (e) {
-    throw new Error(`Error fetching attestation from ${url}: ${e}`);
+    throw new Error(`Error fetching attestation from ${url}`, { cause: e });
   }
 
   let responseData: GitHubAttestationResponse;
   try {
     responseData = await bundleResponse.json();
   } catch (e) {
-    throw new Error(`Error decoding JSON response from ${url}: ${e}`);
+    throw new Error(`Error decoding JSON response from ${url}`, { cause: e });
   }
 
   try {
     const bundleObject = responseData.attestations[0].bundle;
     return bundleObject;
   } catch (e) {
-    throw new Error(`Invalid attestation response format from ${url}: ${e}. Response: ${JSON.stringify(responseData)}`);
+    throw new Error(`Invalid attestation response format from ${url}. Response: ${JSON.stringify(responseData)}`, { cause: e });
   }
 }

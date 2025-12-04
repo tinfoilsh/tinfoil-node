@@ -112,6 +112,6 @@ export async function verifyAttestation(
     };
 
   } catch (e) {
-    throw new Error(`Attestation processing failed: ${e}`);
+    throw new Error('Attestation processing failed', { cause: e });
   }
 }
