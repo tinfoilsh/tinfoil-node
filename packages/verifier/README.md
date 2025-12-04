@@ -28,6 +28,9 @@ console.log(attestation.hpkePublicKey);
 - TUF-based trusted root updates
 - Works in Node.js and browsers (uses Web Crypto API)
 
+### TODOs
+- [ ] add support for TDX attestation verification 
+
 ## Development
 
 ```bash
