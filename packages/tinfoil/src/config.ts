@@ -10,5 +10,5 @@ export const TINFOIL_CONFIG = {
   /**
    * The ATC (Attestation and Trust Center) API URL for fetching available routers
    */
-  ATC_API_URL: "https://atc.tinfoil.sh/routers",
+  ATC_API_URL: "https://atc.tinfoil.sh/routers?platform=snp",
 } as const;
