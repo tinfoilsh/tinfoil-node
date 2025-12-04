@@ -20,6 +20,10 @@ const SnpOid = {
   UCODE: '1.3.6.1.4.1.3704.1.3.8',
   HWID: '1.3.6.1.4.1.3704.1.4',
   CSP_ID: '1.3.6.1.4.1.3704.1.5',
+  // Aliases for compatibility
+  BOOTLOADER: '1.3.6.1.4.1.3704.1.3.1',
+  TEE: '1.3.6.1.4.1.3704.1.3.2',
+  SNP: '1.3.6.1.4.1.3704.1.3.3',
 };
 
 // OIDs for signature and key algorithms

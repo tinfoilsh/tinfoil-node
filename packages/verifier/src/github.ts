@@ -55,12 +55,11 @@ export async function fetchLatestDigest(repo: string): Promise<string> {
 
 /**
  * Fetches the sigstore bundle from a repo for a given repo and EIF hash.
- * Uses a local filesystem cache to avoid repeated downloads.
  *
  * @param repo - The GitHub repository in format "owner/repo"
  * @param digest - The EIF hash/digest
- * @returns The sigstore bundle JSON object, encoded as bytes
- * @throws Error if there's any error fetching or parsing the data, or reading/writing the cache
+ * @returns The sigstore bundle JSON object
+ * @throws Error if there's any error fetching or parsing the data
  */
 export async function fetchAttestationBundle(repo: string, digest: string): Promise<unknown> {
   const url = `https://api-github-proxy.tinfoil.sh/repos/${repo}/attestations/sha256:${digest}`;

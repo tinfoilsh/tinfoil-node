@@ -31,7 +31,7 @@ async function verifyReportSignature(
   }  
 
   // Check signature algorithm must be ECDSA
-  if (report.signatureAlgo !== 1) {
+  if (report.signatureAlgo !== 1) { // 1 = SignEcdsaP384Sha384
     throw new Error(`Unknown SignatureAlgo: ${report.signatureAlgo}`);
   }
 
@@ -94,7 +94,8 @@ export async function verifyAttestation(
     throw new Error('Certificate chain verification returned false');
   }
 
-  // Verify report - get the CryptoKey from VCEK certificate
+  // Get the CryptoKey from VCEK certificate
+  // (EC P-384 key type is validated in validateVcekFormat during chain verification)
   const vcekPublicKey = await chain.vcekPublicKey;
   const isSignatureValid = await verifyReportSignature(vcekPublicKey, report);
   if (!isSignatureValid) {
