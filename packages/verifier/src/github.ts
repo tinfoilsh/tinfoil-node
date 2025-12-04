@@ -81,10 +81,8 @@ export async function fetchAttestationBundle(repo: string, digest: string): Prom
     throw new Error(`Error decoding JSON response from ${url}`, { cause: e });
   }
 
-  try {
-    const bundleObject = responseData.attestations[0].bundle;
-    return bundleObject;
-  } catch (e) {
-    throw new Error(`Invalid attestation response format from ${url}. Response: ${JSON.stringify(responseData)}`, { cause: e });
+  if (!responseData.attestations?.[0]?.bundle) {
+    throw new Error(`Invalid attestation response format from ${url}. Response: ${JSON.stringify(responseData)}`);
   }
+  return responseData.attestations[0].bundle;
 }
