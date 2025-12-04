@@ -4,8 +4,8 @@ const RUN_INTEGRATION = process.env.RUN_TINFOIL_INTEGRATION === "true";
 
 describe("TinfoilAI - API integration", () => {
   it.skipIf(!RUN_INTEGRATION)("should verify enclave with confidential-model-router repo", async () => {
-    const { TinfoilAI } = await import("../tinfoilai");
-    const { TINFOIL_CONFIG } = await import("../config");
+    const { TinfoilAI } = await import("../src/tinfoilai");
+    const { TINFOIL_CONFIG } = await import("../src/config");
     const API_KEY = "MOCK_API_KEY";
 
     const client = new TinfoilAI({

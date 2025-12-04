@@ -10,7 +10,7 @@ const RUN_INTEGRATION = process.env.RUN_TINFOIL_INTEGRATION === "true";
 describe("Examples Integration Tests", () => {
   describe("Basic Chat Example", () => {
     it.skipIf(!RUN_INTEGRATION)("should create a TinfoilAI client and make a chat completion request", async () => {
-      const { TinfoilAI } = await import("../tinfoilai");
+      const { TinfoilAI } = await import("../src/tinfoilai");
 
       const client = new TinfoilAI({
         apiKey: "tinfoil",
@@ -39,7 +39,7 @@ describe("Examples Integration Tests", () => {
 
   describe("Secure Client Example", () => {
     it.skipIf(!RUN_INTEGRATION)("should create a SecureClient and make a direct fetch request", async () => {
-      const { SecureClient } = await import("../secure-client");
+      const { SecureClient } = await import("../src/secure-client");
 
       const client = new SecureClient();
       expect(client).toBeTruthy();
@@ -67,7 +67,7 @@ describe("Examples Integration Tests", () => {
 
   describe("EHBP Unverified Client Example", () => {
     it.skipIf(!RUN_INTEGRATION)("should create a UnverifiedClient with EHBP configuration", async () => {
-      const { UnverifiedClient } = await import("../unverified-client");
+      const { UnverifiedClient } = await import("../src/unverified-client");
 
       const client = new UnverifiedClient();
       expect(client).toBeTruthy();
@@ -90,7 +90,7 @@ describe("Examples Integration Tests", () => {
 
   describe("Streaming Chat Completion", () => {
     it.skipIf(!RUN_INTEGRATION)("should handle streaming chat completion", async () => {
-      const { TinfoilAI } = await import("../tinfoilai");
+      const { TinfoilAI } = await import("../src/tinfoilai");
       const client = new TinfoilAI({ apiKey: "tinfoil" });
 
       await client.ready();
@@ -117,7 +117,7 @@ describe("Examples Integration Tests", () => {
     });
 
     it("should initialize correctly when enclaveURL is provided but baseURL is not", async () => {
-      const { UnverifiedClient } = await import("../unverified-client");
+      const { UnverifiedClient } = await import("../src/unverified-client");
 
       const client = new UnverifiedClient({
         enclaveURL: "https://example-enclave.com",
@@ -129,31 +129,18 @@ describe("Examples Integration Tests", () => {
       expect(client.fetch).toBeTruthy();
     });
 
-    it("SecureClient should initialize correctly when enclaveURL is provided but baseURL is not", async () => {
-      const { SecureClient } = await import("../secure-client");
+    it("SecureClient should fail verification with fake enclaveURL", async () => {
+      const { SecureClient } = await import("../src/secure-client");
 
       const client = new SecureClient({
         enclaveURL: "https://example-enclave.com",
       });
 
-      try {
-        await client.ready();
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        expect(
-          message.includes("verify") ||
-            message.includes("fetch") ||
-            message.includes("attestation") ||
-            message.includes("Attestation")
-        ).toBe(true);
-      }
-
-      expect(client).toBeTruthy();
-      expect(client.fetch).toBeTruthy();
+      await expect(client.ready()).rejects.toThrow(/verify|fetch|attestation/i);
     });
 
     it("should initialize correctly when baseURL is provided but enclaveURL is not", async () => {
-      const { UnverifiedClient } = await import("../unverified-client");
+      const { UnverifiedClient } = await import("../src/unverified-client");
 
       const client = new UnverifiedClient({
         baseURL: "https://example-api.com/v1/",
@@ -165,33 +152,20 @@ describe("Examples Integration Tests", () => {
       expect(client.fetch).toBeTruthy();
     });
 
-    it("SecureClient should initialize correctly when baseURL is provided but enclaveURL is not", async () => {
-      const { SecureClient } = await import("../secure-client");
+    it("SecureClient should fail verification with fake baseURL", async () => {
+      const { SecureClient } = await import("../src/secure-client");
 
       const client = new SecureClient({
         baseURL: "https://example-api.com/v1/",
       });
 
-      try {
-        await client.ready();
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        expect(
-          message.includes("verify") ||
-            message.includes("fetch") ||
-            message.includes("attestation") ||
-            message.includes("Attestation")
-        ).toBe(true);
-      }
-
-      expect(client).toBeTruthy();
-      expect(client.fetch).toBeTruthy();
+      await expect(client.ready()).rejects.toThrow(/verify|fetch|attestation/i);
     });
   });
 
   describe("Audio Transcription", () => {
     it.skipIf(!RUN_INTEGRATION)("should transcribe audio using whisper-large-v3-turbo model", async () => {
-      const { TinfoilAI } = await import("../tinfoilai");
+      const { TinfoilAI } = await import("../src/tinfoilai");
       const client = new TinfoilAI({ apiKey: "tinfoil" });
 
       await client.ready();

@@ -41,7 +41,7 @@ const createSecureFetchMock = vi.fn(
   },
 );
 
-vi.mock("../verifier.js", () => ({
+vi.mock("../src/verifier.js", () => ({
   Verifier: class {
     verify() {
       return verifyMock();
@@ -52,7 +52,7 @@ vi.mock("../verifier.js", () => ({
   },
 }));
 
-vi.mock("../secure-fetch.js", () => ({
+vi.mock("../src/secure-fetch.js", () => ({
   createSecureFetch: createSecureFetchMock,
 }));
 
@@ -62,7 +62,7 @@ describe("SecureClient", () => {
   });
 
   it("should create a client and initialize securely", async () => {
-    const { SecureClient } = await import("../secure-client");
+    const { SecureClient } = await import("../src/secure-client");
 
     const client = new SecureClient({
       baseURL: "https://test.example.com/",
@@ -86,7 +86,7 @@ describe("SecureClient", () => {
     const mockResponseBody = { test: "response" };
     mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponseBody)));
 
-    const { SecureClient } = await import("../secure-client");
+    const { SecureClient } = await import("../src/secure-client");
 
     const client = new SecureClient({
       baseURL: "https://test.example.com/",
@@ -106,7 +106,7 @@ describe("SecureClient", () => {
   });
 
   it("should handle verification document retrieval", async () => {
-    const { SecureClient } = await import("../secure-client");
+    const { SecureClient } = await import("../src/secure-client");
 
     const client = new SecureClient({
       baseURL: "https://test.example.com/",
@@ -119,7 +119,7 @@ describe("SecureClient", () => {
   });
 
   it("should lazily initialize when fetch is first accessed", async () => {
-    const { SecureClient } = await import("../secure-client");
+    const { SecureClient } = await import("../src/secure-client");
 
     const client = new SecureClient({
       baseURL: "https://test.example.com/",

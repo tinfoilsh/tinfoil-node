@@ -27,7 +27,7 @@ const mockVerificationDocument = {
   },
 };
 
-vi.mock("../verifier.js", () => ({
+vi.mock("../src/verifier.js", () => ({
   Verifier: class {
     verify() {
       return verifyMock();
@@ -39,7 +39,7 @@ vi.mock("../verifier.js", () => ({
 }));
 
 // Mock createSecureFetch to simulate browser behavior (throw when no HPKE key)
-vi.mock("../secure-fetch.js", () => ({
+vi.mock("../src/secure-fetch.js", () => ({
   createSecureFetch: (_baseURL: string, _enclaveURL: string | undefined, hpkePublicKey: string | undefined) => {
     if (!hpkePublicKey) {
       throw new Error(
@@ -57,7 +57,7 @@ describe("SecureClient (browser)", () => {
   });
 
   it("should reject initialization when HPKE is not available in browser", async () => {
-    const { SecureClient } = await import("../secure-client");
+    const { SecureClient } = await import("../src/secure-client");
 
     const client = new SecureClient({
       baseURL: "https://test.example.com/",
