@@ -1,8 +1,9 @@
 import { Report } from './report.js';
 import { CertificateChain } from './cert-chain.js';
 import type { TCBParts, SnpPolicy, SnpPlatformInfo } from './types.js';
-import { tcbFromInt, bytesToHex } from './utils.js';
+import { tcbFromInt, tcbMeetsMinimum, bytesToHex } from './utils.js';
 import { ReportSigner } from './constants.js';
+import { uint8ArrayEqual } from '@freedomofpress/crypto-browser';
 
 /**
  * Verification options for an SEV-SNP attestation report.
@@ -170,13 +171,6 @@ function comparePolicyVersions(required: SnpPolicy, report: SnpPolicy): number {
   return required.abiMinor - report.abiMinor;
 }
 
-function tcbMeetsMinimum(tcb: TCBParts, minimum: TCBParts): boolean {
-  return tcb.blSpl >= minimum.blSpl &&
-         tcb.teeSpl >= minimum.teeSpl &&
-         tcb.snpSpl >= minimum.snpSpl &&
-         tcb.ucodeSpl >= minimum.ucodeSpl;
-}
-
 function tcbPartsToString(tcb: TCBParts): string {
   return `TCBParts(bootloader=${tcb.blSpl}, tee=${tcb.teeSpl}, snp=${tcb.snpSpl}, microcode=${tcb.ucodeSpl})`;
 }
@@ -253,7 +247,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.reportData.length !== 64) {
       throw new Error(`Report data length is ${report.reportData.length}, expected 64 bytes`);
     }
-    if (!uint8ArraysEqual(report.reportData, options.reportData)) {
+    if (!uint8ArrayEqual(report.reportData, options.reportData)) {
       throw new Error(`Report data mismatch: got ${bytesToHex(report.reportData)}, expected ${bytesToHex(options.reportData)}`);
     }
   }
@@ -262,7 +256,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.hostData.length !== 32) {
       throw new Error(`Host data length is ${report.hostData.length}, expected 32 bytes`);
     }
-    if (!uint8ArraysEqual(report.hostData, options.hostData)) {
+    if (!uint8ArrayEqual(report.hostData, options.hostData)) {
       throw new Error(`Host data mismatch: got ${bytesToHex(report.hostData)}, expected ${bytesToHex(options.hostData)}`);
     }
   }
@@ -271,7 +265,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.measurement.length !== 48) {
       throw new Error(`Measurement length is ${report.measurement.length}, expected 48 bytes`);
     }
-    if (!uint8ArraysEqual(report.measurement, options.measurement)) {
+    if (!uint8ArrayEqual(report.measurement, options.measurement)) {
       throw new Error(`Measurement mismatch: got ${bytesToHex(report.measurement)}, expected ${bytesToHex(options.measurement)}`);
     }
   }
@@ -280,7 +274,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.chipId.length !== 64) {
       throw new Error(`Chip ID length is ${report.chipId.length}, expected 64 bytes`);
     }
-    if (!uint8ArraysEqual(report.chipId, options.chipId)) {
+    if (!uint8ArrayEqual(report.chipId, options.chipId)) {
       throw new Error(`Chip ID mismatch: got ${bytesToHex(report.chipId)}, expected ${bytesToHex(options.chipId)}`);
     }
   }
@@ -289,7 +283,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.imageId.length !== 16) {
       throw new Error(`Image ID length is ${report.imageId.length}, expected 16 bytes`);
     }
-    if (!uint8ArraysEqual(report.imageId, options.imageId)) {
+    if (!uint8ArrayEqual(report.imageId, options.imageId)) {
       throw new Error(`Image ID mismatch: got ${bytesToHex(report.imageId)}, expected ${bytesToHex(options.imageId)}`);
     }
   }
@@ -298,7 +292,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.familyId.length !== 16) {
       throw new Error(`Family ID length is ${report.familyId.length}, expected 16 bytes`);
     }
-    if (!uint8ArraysEqual(report.familyId, options.familyId)) {
+    if (!uint8ArrayEqual(report.familyId, options.familyId)) {
       throw new Error(`Family ID mismatch: got ${bytesToHex(report.familyId)}, expected ${bytesToHex(options.familyId)}`);
     }
   }
@@ -307,7 +301,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.reportId.length !== 32) {
       throw new Error(`Report ID length is ${report.reportId.length}, expected 32 bytes`);
     }
-    if (!uint8ArraysEqual(report.reportId, options.reportId)) {
+    if (!uint8ArrayEqual(report.reportId, options.reportId)) {
       throw new Error(`Report ID mismatch: got ${bytesToHex(report.reportId)}, expected ${bytesToHex(options.reportId)}`);
     }
   }
@@ -316,7 +310,7 @@ export function validateReport(report: Report, chain: CertificateChain, options:
     if (report.reportIdMa.length !== 32) {
       throw new Error(`Report ID MA length is ${report.reportIdMa.length}, expected 32 bytes`);
     }
-    if (!uint8ArraysEqual(report.reportIdMa, options.reportIdMa)) {
+    if (!uint8ArrayEqual(report.reportIdMa, options.reportIdMa)) {
       throw new Error(`Report ID MA mismatch: got ${bytesToHex(report.reportIdMa)}, expected ${bytesToHex(options.reportIdMa)}`);
     }
   }
@@ -412,12 +406,4 @@ function validatePlatformInfo(reportInfo: SnpPlatformInfo, required: SnpPlatform
   if (!reportInfo.tioEnabled && required.tioEnabled) {
     throw new Error(`Required TIO not enabled. Report platform info: ${JSON.stringify(reportInfo)}, Required platform info: ${JSON.stringify(required)}`);
   }
-}
-
-function uint8ArraysEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
 }

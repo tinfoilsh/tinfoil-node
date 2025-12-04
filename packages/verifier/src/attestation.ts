@@ -147,20 +147,6 @@ async function verifySevReport(attestationDoc: string, isCompressed: boolean): P
   return report;
 }
 
-/**
- * Convert an SNP launch digest string to measurement format.
- *
- * @param snpDigest - The SNP launch digest as a hex string
- * @returns Object in the format expected by measurement parameter
- * @example
- * const measurement = fromSnpDigest("abcdef");
- */
-export function fromSnpDigest(snpDigest: string): { snp_measurement: string } {
-  return {
-    snp_measurement: snpDigest,
-  };
-}
-
 function base64ToBytes(base64: string): Uint8Array {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);

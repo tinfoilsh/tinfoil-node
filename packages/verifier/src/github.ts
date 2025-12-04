@@ -3,7 +3,7 @@ export interface Release {
   body: string;
 }
 
-export interface AttestationResponse {
+interface GitHubAttestationResponse {
   attestations: Array<{
     bundle: unknown;
   }>;
@@ -75,7 +75,7 @@ export async function fetchAttestationBundle(repo: string, digest: string): Prom
     throw new Error(`Error fetching attestation from ${url}: ${e}`);
   }
 
-  let responseData: AttestationResponse;
+  let responseData: GitHubAttestationResponse;
   try {
     responseData = await bundleResponse.json();
   } catch (e) {
