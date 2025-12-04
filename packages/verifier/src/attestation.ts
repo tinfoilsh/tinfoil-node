@@ -111,7 +111,7 @@ async function verifySevReport(attestationDoc: string, isCompressed: boolean): P
   try {
     attDocBytes = base64ToBytes(attestationDoc);
   } catch (e) {
-    throw new Error(`Failed to decode base64: ${e}`);
+    throw new Error('Failed to decode base64', { cause: e });
   }
 
   if (isCompressed) {
@@ -122,7 +122,7 @@ async function verifySevReport(attestationDoc: string, isCompressed: boolean): P
   try {
     report = new Report(attDocBytes);
   } catch (e) {
-    throw new Error(`Failed to parse report: ${e}`);
+    throw new Error('Failed to parse report', { cause: e });
   }
 
   const chain = await CertificateChain.fromReport(report);
@@ -131,7 +131,7 @@ async function verifySevReport(attestationDoc: string, isCompressed: boolean): P
   try {
     res = await verifyAttestationInternal(chain, report);
   } catch (e) {
-    throw new Error(`Failed to verify attestation: ${e}`);
+    throw new Error('Failed to verify attestation', { cause: e });
   }
 
   if (!res) {
@@ -141,7 +141,7 @@ async function verifySevReport(attestationDoc: string, isCompressed: boolean): P
   try {
     validateReport(report, chain, defaultValidationOptions);
   } catch (e) {
-    throw new Error(`Failed to validate report: ${e}`);
+    throw new Error('Failed to validate report', { cause: e });
   }
 
   return report;

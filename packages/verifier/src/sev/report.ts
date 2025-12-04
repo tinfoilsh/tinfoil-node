@@ -92,7 +92,7 @@ export class Report {
     try {
       mbz64(this.currentTcb, 'current_tcb', 47, 16);
     } catch (e) {
-      throw new Error(`current_tcb not correctly formed: ${e}`);
+      throw new Error('current_tcb not correctly formed', { cause: e });
     }
 
     this.platformInfo = view.getBigUint64(0x40, true);
@@ -104,7 +104,7 @@ export class Report {
     try {
       mbz64(BigInt(this.signerInfo), 'signer_info', 31, 5);
     } catch (e) {
-      throw new Error(`signer_info not correctly formed: ${e}`);
+      throw new Error('signer_info not correctly formed', { cause: e });
     }
 
     const signingKey = (this.signerInfo >> 2) & 7;
@@ -121,7 +121,7 @@ export class Report {
     try {
       mbz(data, 0x4c, 0x50);
     } catch (e) {
-      throw new Error(`report_data not correctly formed: ${e}`);
+      throw new Error('report_data not correctly formed', { cause: e });
     }
 
     // 0x4C-0x50 is MBZ (Must Be Zero)
@@ -137,7 +137,7 @@ export class Report {
     try {
       mbz64(this.reportedTcb, 'reported_tcb', 47, 16);
     } catch (e) {
-      throw new Error(`reported_tcb not correctly formed: ${e}`);
+      throw new Error('reported_tcb not correctly formed', { cause: e });
     }
 
     let mbzLo = 0x188;
@@ -160,7 +160,7 @@ export class Report {
     try {
       mbz(data, mbzLo, 0x1a0);
     } catch (e) {
-      throw new Error(`report_data not correctly formed: ${e}`);
+      throw new Error('report_data not correctly formed', { cause: e });
     }
 
     this.chipId = data.slice(0x1a0, 0x1e0);        // 64 bytes
@@ -169,7 +169,7 @@ export class Report {
     try {
       mbz64(this.committedTcb, 'committed_tcb', 47, 16);
     } catch (e) {
-      throw new Error(`committed_tcb not correctly formed: ${e}`);
+      throw new Error('committed_tcb not correctly formed', { cause: e });
     }
 
     // Version fields
@@ -180,7 +180,7 @@ export class Report {
     try {
       mbz(data, 0x1eb, 0x1ec);
     } catch (e) {
-      throw new Error(`report_data not correctly formed: ${e}`);
+      throw new Error('report_data not correctly formed', { cause: e });
     }
 
     this.committedBuild = view.getUint8(0x1ec);
@@ -190,7 +190,7 @@ export class Report {
     try {
       mbz(data, 0x1ef, 0x1f0);
     } catch (e) {
-      throw new Error(`report_data not correctly formed: ${e}`);
+      throw new Error('report_data not correctly formed', { cause: e });
     }
 
     this.launchTcb = view.getBigUint64(0x1f0, true);
@@ -198,20 +198,20 @@ export class Report {
     try {
       mbz64(this.launchTcb, 'launch_tcb', 47, 16);
     } catch (e) {
-      throw new Error(`launch_tcb not correctly formed: ${e}`);
+      throw new Error('launch_tcb not correctly formed', { cause: e });
     }
 
     try {
       mbz(data, 0x1f8, SIGNATURE_OFFSET);
     } catch (e) {
-      throw new Error(`report_data not correctly formed: ${e}`);
+      throw new Error('report_data not correctly formed', { cause: e });
     }
 
     if (this.signatureAlgo === 1) {  // ECDSA P-384 SHA-384
       try {
         mbz(data, SIGNATURE_OFFSET + ECDSA_P384_SHA384_SIGNATURE_SIZE, REPORT_SIZE);
       } catch (e) {
-        throw new Error(`report_data not correctly formed: ${e}`);
+        throw new Error('report_data not correctly formed', { cause: e });
       }
     }
 
