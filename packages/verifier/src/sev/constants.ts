@@ -13,5 +13,10 @@ export const TURIN_MODEL = 2;
 export enum ReportSigner {
   VcekReportSigner = 0,
   VlekReportSigner = 1,
+  endorseReserved2 = 2,
+  endorseReserved3 = 3,
+  endorseReserved4 = 4,
+  endorseReserved5 = 5,
+  endorseReserved6 = 6,
   NoneReportSigner = 7,
 }

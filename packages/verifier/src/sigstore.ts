@@ -62,6 +62,9 @@ export async function verifyAttestation(
     ]);
 
     // Verify the DSSE envelope and get the payload
+    // This verifies the signature on the DSSE envelope, applies the
+    // certificate identity policy, and checks Rekor log consistency.
+    // It returns the verified payload from within the envelope.
     const { payloadType, payload: payloadBytes } = await verifier.verifyDsse(bundle, policy);
 
     const payload = JSON.parse(new TextDecoder().decode(payloadBytes));
@@ -73,12 +76,9 @@ export async function verifyAttestation(
     const predicateType = payload.predicateType as PredicateType;
     const predicateFields = payload.predicate;
 
-    /**
-     * Manual Payload Digest Verification
-     *
-     * Now, verify that the provided external digest matches the
-     * actual digest in the payload returned from the verified envelope.
-     */
+    // Manual Payload Digest Verification
+    // Now, verify that the provided external digest matches the
+    // actual digest in the payload returned from the verified envelope
     if (digest !== payload.subject[0].digest.sha256) {
       throw new Error(
         `Provided digest does not match verified DSSE payload digest. Expected: ${digest}, Got: ${payload.subject[0].digest.sha256}`

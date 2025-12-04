@@ -64,7 +64,7 @@ async function verifySevAttestationV1(attestationDoc: string): Promise<Attestati
     registers: [bytesToHex(report.measurement)],
   };
 
-  const kfp = new TextDecoder().decode(report.reportData);
+  const kfp = bytesToHex(report.reportData);
 
   return {
     measurement,
