@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:browser": "vitest run --config vite.config.playwright.ts",
     "test:browser:integration": "vitest run --config vite.config.integration.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "attestation",
