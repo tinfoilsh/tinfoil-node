@@ -82,7 +82,7 @@ export class TinfoilAI {
       configRepo: this.configRepo,
     });
 
-    this.clientPromise = this.initClient(openAIOptions);
+    this.clientPromise = this.createOpenAIClient(openAIOptions);
   }
 
   public async ready(): Promise<void> {
@@ -92,12 +92,6 @@ export class TinfoilAI {
       })();
     }
     return this.readyPromise;
-  }
-
-  private async initClient(
-    options?: Partial<Omit<ConstructorParameters<typeof OpenAI>[0], "baseURL">>,
-  ): Promise<OpenAI> {
-    return this.createOpenAIClient(options);
   }
 
   private async createOpenAIClient(

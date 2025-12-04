@@ -1,25 +1,21 @@
-import { TINFOIL_CONFIG } from "./config.js";
 import { createEncryptedBodyFetch } from "./encrypted-body-fetch.js";
 import { fetchRouter } from "./router.js";
 
 interface UnverifiedClientOptions {
   baseURL?: string;
   enclaveURL?: string;
-  configRepo?: string;
 }
 
 export class UnverifiedClient {
   private initPromise: Promise<void> | null = null;
   private _fetch: typeof fetch | null = null;
-  
+
   private baseURL?: string;
   private enclaveURL?: string;
-  private readonly configRepo: string;
 
   constructor(options: UnverifiedClientOptions = {}) {
     this.baseURL = options.baseURL;
     this.enclaveURL = options.enclaveURL;
-    this.configRepo = options.configRepo || TINFOIL_CONFIG.INFERENCE_PROXY_REPO;
   }
 
   public async ready(): Promise<void> {
