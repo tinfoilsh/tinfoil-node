@@ -1,0 +1,50 @@
+{
+  "name": "@tinfoilsh/verifier",
+  "version": "0.1.0",
+  "description": "AMD SEV-SNP attestation verifier for Node.js and browsers",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:browser": "vitest run --config vite.config.playwright.ts",
+    "test:browser:integration": "vitest run --config vite.config.integration.ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "attestation",
+    "amd",
+    "sev-snp",
+    "verifier"
+  ],
+  "author": "Tinfoil",
+  "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "@types/node": "^24.0.14",
+    "@vitest/browser": "^3.2.4",
+    "playwright": "^1.49.1",
+    "vite": "^6.0.0",
+    "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@freedomofpress/crypto-browser": "^0.1.4",
+    "@freedomofpress/sigstore-browser": "^0.1.9",
+    "@freedomofpress/tuf-browser": "^0.1.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

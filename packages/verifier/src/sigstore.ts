@@ -1,0 +1,112 @@
+import { PredicateType } from './types.js';
+import type { AttestationMeasurement } from './types.js';
+import type { X509Certificate, VerificationPolicy } from '@freedomofpress/sigstore-browser';
+
+class GitHubWorkflowRefPattern implements VerificationPolicy {
+  private pattern: RegExp;
+
+  constructor(pattern: string | RegExp) {
+    this.pattern = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+  }
+
+  verify(cert: X509Certificate): void {
+    const ext = cert.extGitHubWorkflowRef;
+    if (!ext) {
+      throw new Error('Certificate does not contain GitHubWorkflowRef extension');
+    }
+    if (!this.pattern.test(ext.workflowRef)) {
+      throw new Error(
+        `Certificate's GitHubWorkflowRef "${ext.workflowRef}" does not match pattern "${this.pattern}"`
+      );
+    }
+  }
+}
+
+/**
+ * Verifies the attested measurements of an enclave image against a trusted root (Sigstore)
+ * and returns the measurement payload contained in the DSSE.
+ *
+ * @param bundleJson - The bundle JSON data
+ * @param digest - The expected hex-encoded SHA256 digest of the DSSE payload
+ * @param repo - The repository name
+ * @returns The verified measurement data
+ * @throws Error if verification fails or digests don't match
+ */
+export async function verifyAttestation(
+  bundleJson: unknown,
+  digest: string,
+  repo: string
+): Promise<AttestationMeasurement> {
+
+  try {
+    const {
+      SigstoreVerifier,
+      TrustedRootProvider,
+      GITHUB_OIDC_ISSUER,
+      AllOf,
+      OIDCIssuer,
+      GitHubWorkflowRepository,
+    } = await import('@freedomofpress/sigstore-browser');
+
+    const verifier = new SigstoreVerifier();
+    const tufProvider = new TrustedRootProvider({ disableCache: true });
+    await verifier.loadSigstoreRootWithTUF(tufProvider);
+
+    const bundle = bundleJson as any;
+
+    // Create policy for GitHub Actions certificate identity
+    const policy = new AllOf([
+      new OIDCIssuer(GITHUB_OIDC_ISSUER),
+      new GitHubWorkflowRepository(repo),
+      new GitHubWorkflowRefPattern(/^refs\/tags\//),
+    ]);
+
+    // Verify the DSSE envelope and get the payload
+    // This verifies the signature on the DSSE envelope, applies the
+    // certificate identity policy, and checks Rekor log consistency.
+    // It returns the verified payload from within the envelope.
+    const { payloadType, payload: payloadBytes } = await verifier.verifyDsse(bundle, policy);
+
+    const payload = JSON.parse(new TextDecoder().decode(payloadBytes));
+
+    if (payloadType !== 'application/vnd.in-toto+json') {
+      throw new Error(`Unsupported payload type: ${payloadType}. Only supports In-toto.`);
+    }
+
+    const predicateType = payload.predicateType as PredicateType;
+    const predicateFields = payload.predicate;
+
+    // Manual Payload Digest Verification
+    // Now, verify that the provided external digest matches the
+    // actual digest in the payload returned from the verified envelope
+    if (digest !== payload.subject[0].digest.sha256) {
+      throw new Error(
+        `Provided digest does not match verified DSSE payload digest. Expected: ${digest}, Got: ${payload.subject[0].digest.sha256}`
+      );
+    }
+
+    // Convert predicate type to measurement type
+    let registers: string[];
+
+    if (!predicateFields) {
+      throw new Error('Payload does not contain predicate');
+    }
+
+    if (predicateType === PredicateType.SnpTdxMultiplatformV1) {
+      if (!predicateFields.snp_measurement) {
+        throw new Error('SNP TDX Multiplatform V1 predicate does not contain snp_measurement');
+      }
+      registers = [predicateFields.snp_measurement];
+    } else {
+      throw new Error(`Unsupported predicate type: ${predicateType}`);
+    }
+
+    return {
+      type: predicateType,
+      registers,
+    };
+
+  } catch (e) {
+    throw new Error('Attestation processing failed', { cause: e });
+  }
+}
