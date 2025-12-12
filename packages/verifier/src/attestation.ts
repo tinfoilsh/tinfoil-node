@@ -40,36 +40,11 @@ export async function fetchAttestation(host: string): Promise<AttestationDocumen
  * @throws Error if verification fails or format is unsupported
  */
 export async function verifyAttestation(doc: AttestationDocument): Promise<AttestationResponse> {
-  if (doc.format === PredicateType.SevGuestV1) {
-    return verifySevAttestationV1(doc.body);
-  } else if (doc.format === PredicateType.SevGuestV2) {
+  if (doc.format === PredicateType.SevGuestV2) {
     return verifySevAttestationV2(doc.body);
   } else {
     throw new Error(`Unsupported attestation format: ${doc.format}`);
   }
-}
-
-/**
- * Verify SEV attestation document and return verification result.
- *
- * @param attestationDoc - Base64 encoded attestation document
- * @returns Verification result
- * @throws Error if verification fails
- */
-async function verifySevAttestationV1(attestationDoc: string): Promise<AttestationResponse> {
-  const report = await verifySevReport(attestationDoc, false);
-
-  const measurement = {
-    type: PredicateType.SevGuestV1,
-    registers: [bytesToHex(report.measurement)],
-  };
-
-  const kfp = bytesToHex(report.reportData);
-
-  return {
-    measurement,
-    tlsPublicKeyFingerprint: kfp,
-  };
 }
 
 /**

@@ -92,12 +92,7 @@ export async function verifyAttestation(
       throw new Error('Payload does not contain predicate');
     }
 
-    if (predicateType === PredicateType.SevGuestV1) {
-      if (!predicateFields.measurement) {
-        throw new Error('SEV Guest V1 predicate does not contain measurement');
-      }
-      registers = [predicateFields.measurement];
-    } else if (predicateType === PredicateType.SnpTdxMultiplatformV1) {
+    if (predicateType === PredicateType.SnpTdxMultiplatformV1) {
       if (!predicateFields.snp_measurement) {
         throw new Error('SNP TDX Multiplatform V1 predicate does not contain snp_measurement');
       }
