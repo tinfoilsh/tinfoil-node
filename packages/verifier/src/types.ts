@@ -1,5 +1,5 @@
 export enum PredicateType {
-  SevGuestV1 = 'https://tinfoil.sh/predicate/sev-snp-guest/v1',
+  SevGuestV1 = 'https://tinfoil.sh/predicate/sev-snp-guest/v1', // Deprecated
   SevGuestV2 = 'https://tinfoil.sh/predicate/sev-snp-guest/v2',
   SnpTdxMultiplatformV1 = 'https://tinfoil.sh/predicate/snp-tdx-multiplatform/v1',
 }

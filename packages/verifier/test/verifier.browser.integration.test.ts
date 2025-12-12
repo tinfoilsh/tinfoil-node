@@ -131,7 +131,6 @@ describe('Browser Integration Tests', () => {
       const enclaveType = doc!.enclaveMeasurement.measurement.type;
 
       const snpCompatibleTypes = [
-        PredicateType.SevGuestV1,
         PredicateType.SevGuestV2,
         PredicateType.SnpTdxMultiplatformV1
       ];
@@ -175,12 +174,6 @@ describe('Browser Integration Tests', () => {
       const a = { type: 'sev-snp', registers: ['abc123'] };
       const b = { type: 'sev-snp', registers: ['def456'] };
       expect(() => compareMeasurements(a, b)).toThrow(MeasurementMismatchError);
-    });
-
-    it('should allow comparison between compatible SNP types', () => {
-      const a = { type: PredicateType.SevGuestV1, registers: ['abc123'] };
-      const b = { type: PredicateType.SevGuestV2, registers: ['abc123'] };
-      expect(() => compareMeasurements(a, b)).not.toThrow();
     });
 
     it('should allow comparison between SNP and multiplatform types', () => {
