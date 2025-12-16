@@ -31,12 +31,13 @@ const completion = await client.chat.completions.create({
 
 ## Browser Usage
 
+Use `bearerToken` for browser authentication (e.g., JWT from your auth system):
+
 ```javascript
 import { TinfoilAI } from 'tinfoil';
 
 const client = new TinfoilAI({
-  apiKey: 'your-api-key',
-  dangerouslyAllowBrowser: true
+  bearerToken: 'your-jwt-token'
 });
 
 await client.ready();
@@ -47,7 +48,7 @@ const completion = await client.chat.completions.create({
 });
 ```
 
-> **Warning:** Using API keys in the browser exposes them to anyone viewing your page source. Use a backend server for production.
+> **Warning:** Using API keys in the browser exposes them to anyone viewing your page source. If you must use `apiKey` instead of `bearerToken` in the browser, set `dangerouslyAllowBrowser: true`.
 
 ## Using with OpenAI SDK
 
