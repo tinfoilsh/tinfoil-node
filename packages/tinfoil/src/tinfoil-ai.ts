@@ -42,6 +42,7 @@ function createAsyncProxy<T extends object>(promise: Promise<T>): T {
 
 interface TinfoilAIOptions {
   apiKey?: string;
+  bearerToken?: string;
   baseURL?: string;
   enclaveURL?: string;
   configRepo?: string;
@@ -55,23 +56,32 @@ export class TinfoilAI {
   private configRepo?: string;
   private secureClient: SecureClient;
   private verificationDocument?: VerificationDocument;
+  private useBearerToken: boolean;
 
   public apiKey?: string;
+  public bearerToken?: string;
   public baseURL?: string;
   public enclaveURL?: string;
 
   constructor(options: TinfoilAIOptions = {}) {
     const openAIOptions = { ...options };
+
+    // bearerToken is used for browser auth (e.g., JWT from your auth system)
+    // It automatically enables browser usage without dangerouslyAllowBrowser
+    this.useBearerToken = !!options.bearerToken;
+
     // In browser builds, never read secrets from process.env to avoid
-    // leaking credentials into client bundles. Require explicit apiKey.
-    if(options.apiKey) {
+    // leaking credentials into client bundles. Require explicit apiKey or bearerToken.
+    if (options.bearerToken) {
+      openAIOptions.apiKey = options.bearerToken;
+      this.bearerToken = options.bearerToken;
+    } else if (options.apiKey) {
       openAIOptions.apiKey = options.apiKey;
-    }
-    else if(!isRealBrowser() && process.env.TINFOIL_API_KEY) {
-      openAIOptions.apiKey = process.env.TINFOIL_API_KEY 
+    } else if (!isRealBrowser() && process.env.TINFOIL_API_KEY) {
+      openAIOptions.apiKey = process.env.TINFOIL_API_KEY;
     }
 
-    this.apiKey = openAIOptions.apiKey;
+    this.apiKey = options.apiKey;
     this.baseURL = options.baseURL;
     this.enclaveURL = options.enclaveURL;
     this.configRepo = options.configRepo || TINFOIL_CONFIG.INFERENCE_PROXY_REPO;
@@ -115,7 +125,9 @@ export class TinfoilAI {
       fetch: this.secureClient.fetch,
     };
 
-    if (isRealBrowser() || (options as any).dangerouslyAllowBrowser === true) {
+    // Automatically allow browser usage when bearerToken is used (e.g., JWT auth)
+    // or when explicitly requested via dangerouslyAllowBrowser
+    if (this.useBearerToken || (options as any).dangerouslyAllowBrowser === true) {
       clientOptions.dangerouslyAllowBrowser = true;
     }
 
