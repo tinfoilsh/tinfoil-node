@@ -19,10 +19,7 @@ echo "======================"
 EXAMPLES=(
   "chat"
   "secure_client"
-  "ehbp_chat"
-  "ehbp_secure_client"
-  "ehbp_unverified_client"
-  "advanced_chat"
+  "unverified_client"
 )
 
 FAILED_EXAMPLES=()
