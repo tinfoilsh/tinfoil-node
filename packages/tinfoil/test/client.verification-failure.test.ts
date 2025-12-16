@@ -29,7 +29,7 @@ describe("Client verification gating", () => {
   });
 
   it("blocks client creation and requests when verification fails", async () => {
-    const { TinfoilAI } = await import("../src/tinfoilai");
+    const { TinfoilAI } = await import("../src/tinfoil-ai");
     const client = new TinfoilAI({ apiKey: "test" });
 
     await expect(client.ready()).rejects.toThrow(/verify/);

@@ -10,7 +10,7 @@ const RUN_INTEGRATION = process.env.RUN_TINFOIL_INTEGRATION === "true";
 describe("Examples Integration Tests", () => {
   describe("Basic Chat Example", () => {
     it.skipIf(!RUN_INTEGRATION)("should create a TinfoilAI client and make a chat completion request", async () => {
-      const { TinfoilAI } = await import("../src/tinfoilai");
+      const { TinfoilAI } = await import("../src/tinfoil-ai");
 
       const client = new TinfoilAI({
         apiKey: "tinfoil",
@@ -90,7 +90,7 @@ describe("Examples Integration Tests", () => {
 
   describe("Streaming Chat Completion", () => {
     it.skipIf(!RUN_INTEGRATION)("should handle streaming chat completion", async () => {
-      const { TinfoilAI } = await import("../src/tinfoilai");
+      const { TinfoilAI } = await import("../src/tinfoil-ai");
       const client = new TinfoilAI({ apiKey: "tinfoil" });
 
       await client.ready();
@@ -165,7 +165,7 @@ describe("Examples Integration Tests", () => {
 
   describe("Audio Transcription", () => {
     it.skipIf(!RUN_INTEGRATION)("should transcribe audio using whisper-large-v3-turbo model", async () => {
-      const { TinfoilAI } = await import("../src/tinfoilai");
+      const { TinfoilAI } = await import("../src/tinfoil-ai");
       const client = new TinfoilAI({ apiKey: "tinfoil" });
 
       await client.ready();

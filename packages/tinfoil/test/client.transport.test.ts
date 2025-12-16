@@ -56,7 +56,7 @@ describe("Secure transport integration", () => {
   });
 
   it("configures the OpenAI SDK to use the encrypted body transport", async () => {
-    const { TinfoilAI } = await import("../src/tinfoilai");
+    const { TinfoilAI } = await import("../src/tinfoil-ai");
     const testBaseURL = "https://test-router.tinfoil.sh/v1/";
     const testEnclaveURL = "https://test-router.tinfoil.sh";
 
