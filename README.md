@@ -103,7 +103,7 @@ npm run clean
 
 - [TinfoilAI SDK Documentation](https://docs.tinfoil.sh/sdk/node-sdk)
 - [OpenAI Client Reference](https://github.com/openai/openai-node) (API is compatible)
-- [Examples](https://github.com/tinfoilsh/tinfoil-node/blob/main/examples/README.md)
+- [Examples](https://github.com/tinfoilsh/tinfoil-node/blob/main/packages/tinfoil/examples/README.md)
 
 ## Reporting Vulnerabilities
 
