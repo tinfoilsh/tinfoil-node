@@ -49,6 +49,29 @@ const completion = await client.chat.completions.create({
 
 > **Warning:** Using API keys in the browser exposes them to anyone viewing your page source. Use a backend server for production.
 
+## Using with OpenAI SDK
+
+If you prefer using the OpenAI SDK directly, use `SecureClient` to get a verified secure fetch:
+
+```typescript
+import OpenAI from "openai";
+import { SecureClient } from "tinfoil";
+
+const secureClient = new SecureClient();
+await secureClient.ready();
+
+const openai = new OpenAI({
+  apiKey: "<YOUR_API_KEY>",
+  baseURL: secureClient.getBaseURL(),
+  fetch: secureClient.fetch,
+});
+
+const completion = await openai.chat.completions.create({
+  model: "llama3-3-70b",
+  messages: [{ role: "user", content: "Hello!" }],
+});
+```
+
 ## Verification API
 
 ```typescript
