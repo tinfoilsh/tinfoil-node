@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TinfoilAI } from '../src/tinfoilai';
+import { TinfoilAI } from '../src/tinfoil-ai';
 import { SecureClient } from '../src/secure-client';
 import { UnverifiedClient } from '../src/unverified-client';
 

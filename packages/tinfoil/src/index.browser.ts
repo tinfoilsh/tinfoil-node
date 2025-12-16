@@ -1,6 +1,6 @@
 // Browser-safe entry point: avoids Node built-ins
-export { TinfoilAI } from "./tinfoilai.js";
-export { TinfoilAI as default } from "./tinfoilai.js";
+export { TinfoilAI } from "./tinfoil-ai.js";
+export { TinfoilAI as default } from "./tinfoil-ai.js";
 
 export * from "./verifier.js";
 export * from "./ai-sdk-provider.js";
