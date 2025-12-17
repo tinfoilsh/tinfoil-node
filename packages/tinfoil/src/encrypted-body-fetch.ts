@@ -2,9 +2,12 @@ import type { Transport as EhbpTransport } from "ehbp";
 import { Identity, Transport, PROTOCOL } from "ehbp";
 
 // Public API
-export async function getHPKEKey(enclaveURL: string) : Promise<CryptoKey> {
-  const url = new URL(enclaveURL);
 
+/**
+ * Fetch and parse server identity from the HPKE keys endpoint.
+ * Returns the server Identity which can be used to create a Transport.
+ */
+export async function getServerIdentity(enclaveURL: string): Promise<Identity> {
   const keysURL = new URL(PROTOCOL.KEYS_PATH, enclaveURL);
 
   if (keysURL.protocol !== 'https:') {
@@ -23,8 +26,7 @@ export async function getHPKEKey(enclaveURL: string) : Promise<CryptoKey> {
   }
 
   const keysData = new Uint8Array(await response.arrayBuffer());
-  const serverIdentity = await Identity.unmarshalPublicConfig(keysData);
-  return serverIdentity.getPublicKey();
+  return await Identity.unmarshalPublicConfig(keysData);
 }
 
 export function normalizeEncryptedBodyRequestArgs(
@@ -133,9 +135,7 @@ export async function getTransportForOrigin(origin: string, keyOrigin: string): 
     }
   }
 
-  const clientIdentity = await Identity.generate();
-
-  const serverPublicKey = await getHPKEKey(keyOrigin);
+  const serverIdentity = await getServerIdentity(keyOrigin);
   const requestHost = new URL(origin).host;
-  return new Transport(clientIdentity, requestHost, serverPublicKey);
+  return new Transport(serverIdentity, requestHost);
 }
