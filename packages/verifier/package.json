@@ -1,6 +1,6 @@
 {
   "name": "@tinfoilsh/verifier",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "AMD SEV-SNP attestation verifier for Node.js and browsers",
   "type": "module",
   "main": "dist/index.js",
@@ -45,7 +45,7 @@
   ],
   "dependencies": {
     "@freedomofpress/crypto-browser": "^0.1.4",
-    "@freedomofpress/sigstore-browser": "^0.1.9",
+    "@freedomofpress/sigstore-browser": "^0.1.11",
     "@freedomofpress/tuf-browser": "^0.1.5"
   },
   "engines": {
