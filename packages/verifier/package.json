@@ -1,6 +1,6 @@
 {
   "name": "@tinfoilsh/verifier",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "AMD SEV-SNP attestation verifier for Node.js and browsers",
   "type": "module",
   "main": "dist/index.js",
