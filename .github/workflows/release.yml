@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: npm ci
@@ -32,7 +32,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to npm
+      - name: Publish @tinfoilsh/verifier to npm
+        run: npm publish --access public --provenance
+        working-directory: packages/verifier
+
+      - name: Publish tinfoil to npm
         run: npm publish --access public --provenance
         working-directory: packages/tinfoil
 
