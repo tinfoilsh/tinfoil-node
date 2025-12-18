@@ -1,8 +1,8 @@
 # Tinfoil TypeScript SDK
 
-[![Build Status](https://github.com/tinfoilsh/tinfoil-node/actions/workflows/test.yml/badge.svg)](https://github.com/tinfoilsh/tinfoil-node/actions)
+[![Build Status](https://github.com/tinfoilsh/tinfoil-js/actions/workflows/test.yml/badge.svg)](https://github.com/tinfoilsh/tinfoil-js/actions)
 [![NPM version](https://img.shields.io/npm/v/tinfoil.svg)](https://npmjs.org/package/tinfoil)
-[![Documentation](https://img.shields.io/badge/docs-tinfoil.sh-blue)](https://docs.tinfoil.sh/sdk/node-sdk)
+[![Documentation](https://img.shields.io/badge/docs-tinfoil.sh-blue)](https://docs.tinfoil.sh/sdk/javascript-sdk)
 
 Secure OpenAI-compatible client for the Tinfoil API. This SDK verifies enclave attestation and encrypts all payloads using [HPKE (RFC 9180)](https://www.rfc-editor.org/rfc/rfc9180.html) via the [EHBP protocol](https://github.com/tinfoilsh/encrypted-http-body-protocol). It also supports a fallback mode to TLS certificate pinning, where all connections are encrypted and terminated to a verified secure enclave. 
 
@@ -127,7 +127,7 @@ npm run clean
 
 - [TinfoilAI SDK Documentation](https://docs.tinfoil.sh/sdk/node-sdk)
 - [OpenAI Client Reference](https://github.com/openai/openai-node) (API is compatible)
-- [Examples](https://github.com/tinfoilsh/tinfoil-node/blob/main/packages/tinfoil/examples/README.md)
+- [Examples](https://github.com/tinfoilsh/tinfoil-js/blob/main/packages/tinfoil/examples/README.md)
 
 ## Reporting Vulnerabilities
 
