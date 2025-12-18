@@ -33,32 +33,21 @@ export class SecureClient {
   }
 
   private async initSecureClient(): Promise<void> {
-    // Only fetch router if neither baseURL nor enclaveURL is provided
-    if (!this.baseURL && !this.enclaveURL) {
+    // Fetch router address if enclaveURL is not provided
+    if (!this.enclaveURL) {
       const routerAddress = await fetchRouter();
       this.enclaveURL = `https://${routerAddress}`;
-      this.baseURL = `https://${routerAddress}/v1/`;
+
+      // Only set baseURL from router if not already provided
+      if (!this.baseURL) {
+        this.baseURL = `https://${routerAddress}/v1/`;
+      }
     }
 
-    // Ensure both baseURL and enclaveURL are initialized
+    // If baseURL still not set, derive from enclaveURL
     if (!this.baseURL) {
-      if (this.enclaveURL) {
-        // If enclaveURL is provided but baseURL is not, derive baseURL from enclaveURL
-        const enclaveUrl = new URL(this.enclaveURL);
-        this.baseURL = `${enclaveUrl.origin}/v1/`;
-      } else {
-        throw new Error("Unable to determine baseURL: neither baseURL nor enclaveURL provided");
-      }
-    }
-
-    if (!this.enclaveURL) {
-      if (this.baseURL) {
-        // If baseURL is provided but enclaveURL is not, derive enclaveURL from baseURL
-        const baseUrl = new URL(this.baseURL);
-        this.enclaveURL = baseUrl.origin;
-      } else {
-        throw new Error("Unable to determine enclaveURL: neither baseURL nor enclaveURL provided");
-      }
+      const enclaveUrl = new URL(this.enclaveURL);
+      this.baseURL = `${enclaveUrl.origin}/v1/`;
     }
 
     const verifier = new Verifier({
