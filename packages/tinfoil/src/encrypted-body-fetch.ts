@@ -113,8 +113,9 @@ export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string
     const targetUrl = new URL(normalized.url, baseURL);
 
     // Add the enclave URL header so proxies know where to forward requests
+    // Only set if enclaveURL differs from baseURL (avoids CORS issues when hitting enclave directly)
     const headers = new Headers(normalized.init?.headers);
-    if (enclaveURL) {
+    if (enclaveURL && new URL(enclaveURL).origin !== new URL(baseURL).origin) {
       headers.set(ENCLAVE_URL_HEADER, enclaveURL);
     }
     const initWithEnclaveHeader = { ...normalized.init, headers };
