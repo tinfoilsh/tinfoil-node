@@ -10,13 +10,18 @@
     "test:integration": "npm run test:integration -ws --if-present",
     "test:browser": "npm run test:browser -ws --if-present",
     "test:browser:integration": "npm run test:browser:integration -ws --if-present",
-    "clean": "npm run clean -ws --if-present"
+    "clean": "npm run clean -ws --if-present",
+    "sync": "syncpack fix-mismatches",
+    "postinstall": "syncpack fix-mismatches"
   },
   "devDependencies": {
+    "syncpack": "^13.0.4",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@freedomofpress/crypto-browser": "^0.1.6",
     "@freedomofpress/sigstore-browser": "^0.1.11",
-    "ehbp": "^0.1.0"
+    "@freedomofpress/tuf-browser": "^0.1.8",
+    "ehbp": "^0.1.1"
   }
 }
