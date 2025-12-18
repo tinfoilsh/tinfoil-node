@@ -1,6 +1,6 @@
 {
   "name": "tinfoil",
-  "version": "0.11.7",
+  "version": "0.11.6",
   "description": "Tinfoil secure OpenAI client wrapper",
   "type": "module",
   "main": "dist/index.js",
