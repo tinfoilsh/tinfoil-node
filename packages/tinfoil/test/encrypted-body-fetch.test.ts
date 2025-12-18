@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getHPKEKey, createEncryptedBodyFetch } from "../src/encrypted-body-fetch";
+import { encryptedBodyRequest, normalizeEncryptedBodyRequestArgs, getServerIdentity, createEncryptedBodyFetch } from "../src/encrypted-body-fetch";
 import { Identity, PROTOCOL } from "ehbp";
 
 describe("encrypted-body-fetch", () => {
-  describe("getHPKEKey", () => {
+  describe("getServerIdentity", () => {
     it("rejects non-HTTPS URLs", async () => {
-      await expect(getHPKEKey("http://example.com/v1")).rejects.toThrow(
+      await expect(getServerIdentity("http://example.com/v1")).rejects.toThrow(
         /HTTPS is required for remote key retrieval/
       );
     });
@@ -22,7 +22,7 @@ describe("encrypted-body-fetch", () => {
       globalThis.fetch = fetchMock as typeof fetch;
 
       try {
-        await expect(getHPKEKey("https://example.com/v1")).rejects.toThrow(
+        await expect(getServerIdentity("https://example.com/v1")).rejects.toThrow(
           /Invalid content type/
         );
       } finally {
@@ -42,7 +42,7 @@ describe("encrypted-body-fetch", () => {
       globalThis.fetch = fetchMock as typeof fetch;
 
       try {
-        await expect(getHPKEKey("https://example.com/v1")).rejects.toThrow(
+        await expect(getServerIdentity("https://example.com/v1")).rejects.toThrow(
           /Failed to get server public key: 500/
         );
       } finally {
@@ -50,7 +50,7 @@ describe("encrypted-body-fetch", () => {
       }
     });
 
-    it("successfully retrieves HPKE key with valid response", async () => {
+    it("successfully retrieves server identity with valid response", async () => {
       const mockIdentity = await Identity.generate();
       const publicConfig = await mockIdentity.marshalConfig();
 
@@ -66,8 +66,8 @@ describe("encrypted-body-fetch", () => {
       globalThis.fetch = fetchMock as typeof fetch;
 
       try {
-        const key = await getHPKEKey("https://example.com/v1");
-        expect(key).toBeInstanceOf(CryptoKey);
+        const identity = await getServerIdentity("https://example.com/v1");
+        expect(identity).toBeInstanceOf(Identity);
         expect(fetchMock).toHaveBeenCalledTimes(1);
       } finally {
         globalThis.fetch = originalFetch;
@@ -164,6 +164,7 @@ describe("encrypted-body-fetch", () => {
       const keyHex = await serverIdentity.getPublicKeyHex();
 
       let keyFetchedFromCorrectOrigin = false;
+      let apiRequestMade = false;
 
       globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
         const url = input instanceof Request ? input.url : input.toString();
@@ -174,19 +175,21 @@ describe("encrypted-body-fetch", () => {
             headers: { "content-type": PROTOCOL.KEYS_MEDIA_TYPE },
           });
         }
-        return new Response("should not reach here");
+        if (url.includes("api.example.com")) {
+          apiRequestMade = true;
+        }
+        return new Response("ok");
       }) as typeof fetch;
 
-      await expect(
-        encryptedBodyRequest(
-          "https://api.example.com/test",
-          keyHex,
-          undefined,
-          "https://enclave.example.com"
-        )
-      ).rejects.toThrow(); // Will reject because we don't handle the actual request
+      await encryptedBodyRequest(
+        "https://api.example.com/test",
+        keyHex,
+        undefined,
+        "https://enclave.example.com"
+      );
 
       expect(keyFetchedFromCorrectOrigin).toBe(true);
+      expect(apiRequestMade).toBe(true);
     });
   });
 
