@@ -152,11 +152,11 @@ describe("Examples Integration Tests", () => {
       expect(client.fetch).toBeTruthy();
     });
 
-    it("SecureClient should fail verification with fake baseURL", async () => {
+    it("SecureClient should fail verification with fake enclaveURL", async () => {
       const { SecureClient } = await import("../src/secure-client");
 
       const client = new SecureClient({
-        baseURL: "https://example-api.com/v1/",
+        enclaveURL: "https://example-api.com",
       });
 
       await expect(client.ready()).rejects.toThrow(/verify|fetch|attestation/i);
