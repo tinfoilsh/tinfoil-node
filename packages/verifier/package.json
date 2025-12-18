@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/sigstore-trusted-root.json dist/",
     "test": "vitest run",
     "test:browser": "vitest run --config vite.config.playwright.ts",
     "test:browser:integration": "vitest run --config vite.config.integration.ts",

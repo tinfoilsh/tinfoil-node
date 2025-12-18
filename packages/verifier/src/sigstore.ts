@@ -1,6 +1,7 @@
 import { PredicateType } from './types.js';
 import type { AttestationMeasurement } from './types.js';
 import type { X509Certificate, VerificationPolicy } from '@freedomofpress/sigstore-browser';
+import sigstoreTrustedRoot from './sigstore-trusted-root.json' with { type: 'json' };
 
 class GitHubWorkflowRefPattern implements VerificationPolicy {
   private pattern: RegExp;
@@ -41,7 +42,6 @@ export async function verifyAttestation(
   try {
     const {
       SigstoreVerifier,
-      TrustedRootProvider,
       GITHUB_OIDC_ISSUER,
       AllOf,
       OIDCIssuer,
@@ -49,8 +49,9 @@ export async function verifyAttestation(
     } = await import('@freedomofpress/sigstore-browser');
 
     const verifier = new SigstoreVerifier();
-    const tufProvider = new TrustedRootProvider({ disableCache: true });
-    await verifier.loadSigstoreRootWithTUF(tufProvider);
+    // Use bundled Sigstore trusted root instead of fetching via TUF
+    // This avoids CORS issues in browsers since tuf-repo-cdn.sigstore.dev doesn't support CORS
+    await verifier.loadSigstoreRoot(sigstoreTrustedRoot);
 
     const bundle = bundleJson as any;
 
