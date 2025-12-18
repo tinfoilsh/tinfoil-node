@@ -79,9 +79,9 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@tinfoilsh/verifier": "*",
     "@ai-sdk/openai-compatible": "^1.0.10",
-    "ehbp": "^0.1.0",
+    "@tinfoilsh/verifier": "*",
+    "ehbp": "^0.1.1",
     "openai": "^5.13.1"
   },
   "peerDependencies": {
