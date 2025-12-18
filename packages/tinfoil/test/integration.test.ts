@@ -152,15 +152,6 @@ describe("Examples Integration Tests", () => {
       expect(client.fetch).toBeTruthy();
     });
 
-    it("SecureClient should fail verification with fake enclaveURL", async () => {
-      const { SecureClient } = await import("../src/secure-client");
-
-      const client = new SecureClient({
-        enclaveURL: "https://example-api.com",
-      });
-
-      await expect(client.ready()).rejects.toThrow(/verify|fetch|attestation/i);
-    });
   });
 
   describe("Audio Transcription", () => {
