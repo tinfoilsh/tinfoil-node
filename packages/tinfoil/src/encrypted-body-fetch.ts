@@ -93,6 +93,8 @@ export async function encryptedBodyRequest(
 // Extended fetch type that includes Response property for OpenAI SDK compatibility
 type FetchWithResponse = typeof fetch & { Response: typeof Response };
 
+const ENCLAVE_URL_HEADER = 'X-Tinfoil-Enclave-Url';
+
 export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string, enclaveURL?: string): FetchWithResponse {
   // Create a dedicated transport instance for this fetch function
   let transportPromise: Promise<EhbpTransport> | null = null;
@@ -110,10 +112,17 @@ export function createEncryptedBodyFetch(baseURL: string, hpkePublicKey?: string
     const normalized = normalizeEncryptedBodyRequestArgs(input, init);
     const targetUrl = new URL(normalized.url, baseURL);
 
+    // Add the enclave URL header so proxies know where to forward requests
+    const headers = new Headers(normalized.init?.headers);
+    if (enclaveURL) {
+      headers.set(ENCLAVE_URL_HEADER, enclaveURL);
+    }
+    const initWithEnclaveHeader = { ...normalized.init, headers };
+
     // Get the dedicated transport instance for this fetch function
     const transportInstance = await getOrCreateTransport();
 
-    return encryptedBodyRequest(targetUrl.toString(), hpkePublicKey, normalized.init, enclaveURL, transportInstance);
+    return encryptedBodyRequest(targetUrl.toString(), hpkePublicKey, initWithEnclaveHeader, enclaveURL, transportInstance);
   }) as FetchWithResponse;
 
   // Expose Response constructor for OpenAI SDK's FormData support detection
