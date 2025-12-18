@@ -29,6 +29,10 @@
   ],
   "author": "Tinfoil",
   "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinfoilsh/tinfoil-js.git"
+  },
   "devDependencies": {
     "@types/node": "^24.0.14",
     "@vitest/browser": "^3.2.4",
