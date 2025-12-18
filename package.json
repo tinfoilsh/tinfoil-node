@@ -1,5 +1,5 @@
 {
-  "name": "tinfoil",
+  "name": "tinfoil-monorepo",
   "private": true,
   "workspaces": [
     "packages/*"
